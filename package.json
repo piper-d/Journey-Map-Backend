@@ -1,0 +1,29 @@
+{
+  "name": "journey-map-backend",
+  "version": "1.0.0",
+  "description": "backend repo for the SD project. testing the connection",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node .",
+    "startdev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/piper-d/Journey-Map-Backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/piper-d/Journey-Map-Backend/issues"
+  },
+  "homepage": "https://github.com/piper-d/Journey-Map-Backend#readme",
+  "dependencies": {
+    "body-parser": "^1.20.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.2.0"
+  }
+}
