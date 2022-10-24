@@ -5,12 +5,14 @@ const express = require("express")
 const csrf = require("csurf")
 const cors = require("cors")
 const middleware = require("./middleware")
+const admin = require("./config/firebase-config")
 
 ///////////////////////////////////
 // Initializing the app
 const PORT = process.env.PORT || 8080
 const app = express()
 const csrfMiddleware = csrf({ cookie: true })
+const db = admin.firestore()
 
 ///////////////////////////////////
 // Middleware
@@ -34,11 +36,11 @@ app.all('*', (req, res, next) => {
 })
 
 
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
     res.send("Backend home page")
 })
 
-app.get("/dummy", async (req, res) => {
+app.get("/dummy", async (_, res) => {
     return res.json({
         tasks: [
             { title: 'Task1', },
@@ -47,16 +49,22 @@ app.get("/dummy", async (req, res) => {
     });
 })
 
-app.get("/login", (req, res) => {
-    console.log("This is login route")
+app.get("/trips", async (req, res) => {
+    console.log("in trips")
+
 })
 
-app.get("/signup", (req, res) => {
-    console.log("This is signup route")
-})
+app.get("/trips/:id", (req, res) => {
+    const { id } = req.params
 
-app.get("/logout", (req, res) => {
-    console.log("This is log out page")
+    db.collection('Trips').doc(id).get().then((snap) => {
+        if (snap.exists) {
+            const data = snap.data();
+            return res.json(data)
+        } else {
+            console.log("Document does not exist");
+        }
+    })
 })
 
 app.get("/profile", (req, res) => {
