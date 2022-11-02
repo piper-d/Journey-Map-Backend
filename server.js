@@ -6,6 +6,7 @@ const csrf = require("csurf")
 const cors = require("cors")
 const middleware = require("./middleware")
 const admin = require("./config/firebase-config")
+const AppError = require("./utils/AppError")
 
 ///////////////////////////////////
 // Initializing the app
@@ -35,40 +36,62 @@ app.all('*', (req, res, next) => {
     next()
 })
 
+app.use((req, res, next) => {
+    res.locals.currentUser = req.user;
+    next();
+})
+
 
 app.get("/", (_, res) => {
     res.send("Backend home page")
 })
 
-app.get("/dummy", async (_, res) => {
+app.get("/dummy", async (req, res) => {
+
     return res.json({
         tasks: [
             { title: 'Task1', },
             { title: 'Task2', },
-        ],
+        ]
     });
 })
 
 app.get("/trips", async (req, res) => {
-    console.log("in trips")
-
 })
 
-app.get("/trips/:id", (req, res) => {
+app.get("/trips/:id", async (req, res, next) => {
     const { id } = req.params
 
-    db.collection('Trips').doc(id).get().then((snap) => {
+    try {
+        const snap = await db.collection('Trips').doc(id).get()
         if (snap.exists) {
             const data = snap.data();
+            if (data["user"]["_path"]["segments"][1] != req.user) {
+                next(new AppError("this trip does not belong to u", 400))
+            }
             return res.json(data)
         } else {
-            console.log("Document does not exist");
+            console.log('else')
+            next(AppError("Trip does not exist"), 400)
         }
-    })
+    } catch (e) {
+        console.log("after catch")
+        next(new AppError("Bad request", 400))
+    }
 })
 
-app.get("/profile", (req, res) => {
-    console.log("This is profile route")
+
+///////////////////////////////////
+// Error routes
+
+app.all('*', (req, res, next) => {
+    next(new AppError('API endpoint is non-existent', 404))
+})
+
+app.use((err, req, res, next) => {
+    const { statusCode = 500 } = err;
+    if (!err.message) err.message = 'Oh No, Something Went Wrong!'
+    res.status(statusCode).json({ 'error': err })
 })
 
 app.listen(8080, () => {
