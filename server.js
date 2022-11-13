@@ -4,7 +4,7 @@ const cookieParser = require("cookie-parser")
 const express = require("express")
 const csrf = require("csurf")
 const cors = require("cors")
-const middleware = require("./middleware")
+const {decodeToken} = require("./middleware")
 const admin = require("./config/firebase-config")
 const AppError = require("./utils/AppError")
 
@@ -26,7 +26,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser())
 app.use(csrfMiddleware)
-app.use(middleware.decodeToken)
 
 
 ///////////////////////////////////
@@ -35,6 +34,7 @@ app.all('*', (req, res, next) => {
     res.cookie('XSRF-TOKEN', req.csrfToken())
     next()
 })
+
 
 app.use((req, res, next) => {
     res.locals.currentUser = req.user;
@@ -56,10 +56,10 @@ app.get("/dummy", async (req, res) => {
     });
 })
 
-app.get("/trips", async (req, res) => {
+app.get("/trips", decodeToken, async (req, res) => {
 })
 
-app.get("/trips/:id", async (req, res, next) => {
+app.get("/trips/:id", decodeToken, async (req, res, next) => {
     const { id } = req.params
 
     try {
@@ -67,7 +67,7 @@ app.get("/trips/:id", async (req, res, next) => {
         if (snap.exists) {
             const data = snap.data();
             if (data["user"]["_path"]["segments"][1] != req.user) {
-                next(new AppError("this trip does not belong to u", 400))
+                // next(new AppError("this trip does not belong to u", 400))
             }
             return res.json(data)
         } else {
