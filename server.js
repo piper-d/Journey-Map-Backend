@@ -4,7 +4,7 @@ const cookieParser = require("cookie-parser")
 const express = require("express")
 const csrf = require("csurf")
 const cors = require("cors")
-const {decodeToken} = require("./middleware")
+const { decodeToken } = require("./middleware")
 const admin = require("./config/firebase-config")
 const AppError = require("./utils/AppError")
 
@@ -67,12 +67,12 @@ app.get("/trips/:id", decodeToken, async (req, res, next) => {
         if (snap.exists) {
             const data = snap.data();
             if (data["user"]["_path"]["segments"][1] != req.user) {
-                // next(new AppError("this trip does not belong to u", 400))
+                next(new AppError("this trip does not belong to you", 403))
             }
             return res.json(data)
         } else {
             console.log('else')
-            next(AppError("Trip does not exist"), 400)
+            next(AppError("Trip does not exist"), 403)
         }
     } catch (e) {
         console.log("after catch")
