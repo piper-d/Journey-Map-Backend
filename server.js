@@ -8,6 +8,7 @@ const { decodeToken } = require("./middleware")
 const admin = require("./config/firebase-config")
 const AppError = require("./utils/AppError")
 
+
 ///////////////////////////////////
 // Initializing the app
 const PORT = process.env.PORT || 8080
@@ -46,7 +47,7 @@ app.get("/", (_, res) => {
     res.send("Backend home page")
 })
 
-app.get("/dummy", async (req, res) => {
+app.get("/dummy", async (req, res, next) => {
 
     return res.json({
         tasks: [
@@ -56,7 +57,26 @@ app.get("/dummy", async (req, res) => {
     });
 })
 
-app.get("/trips", decodeToken, async (req, res) => {
+app.get("/trips", decodeToken, async (req, res, next) => {
+    try {
+        const userRef = db.collection("Users").doc(req.user)
+        console.log(userRef)
+        const snap = await db.collection('Trips').where("user", "==", userRef).get()
+        // const snap = await db.collection('Trips').get()
+        console.log(snap.size)
+        const data = []
+        if (!snap.empty) {
+            snap.forEach(doc => {
+                data.push(doc.data())
+            });
+            return res.json(data)
+        }
+        else {
+            res.json({ trips: "you currently have no trips" })
+        }
+    } catch {
+        next(new AppError("Bad request", 400))
+    }
 })
 
 app.get("/trips/:id", decodeToken, async (req, res, next) => {
@@ -71,11 +91,9 @@ app.get("/trips/:id", decodeToken, async (req, res, next) => {
             }
             return res.json(data)
         } else {
-            console.log('else')
             next(AppError("Trip does not exist"), 403)
         }
     } catch (e) {
-        console.log("after catch")
         next(new AppError("Bad request", 400))
     }
 })
