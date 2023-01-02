@@ -93,7 +93,7 @@ app.get("/trips/:id", decodeToken, async (req, res, next) => {
             }
             return res.json(data)
         } else {
-            next(AppError("Trip does not exist"), 403)
+            next(AppError("Trip does not exist"), 404)
         }
     } catch (e) {
         next(new AppError("Bad request", 400))
@@ -125,9 +125,31 @@ app.post("/trips", decodeToken, async (req, res, next) => {
         await user.update({ Trips: firestore.FieldValue.arrayUnion(trip_ref) })
         return res.status(200).json({ error: "" })
     } catch (e) {
-        console.log("ERRRRROOOOOOOOOR")
-        console.log(e)
         next(new AppError("Bad request. Could not create a trip", 400))
+    }
+})
+
+app.delete("/trips/:id", decodeToken, async (req, res, next) => {
+    const { id } = req.params
+    try {
+        const user = await db.collection("Users").doc(req.user)
+        const trip_ref = await db.collection("Trips").doc(id)
+        const snap = await trip_ref.get()
+        if (snap.exists) {
+            const data = snap.data();
+            if (data["user"]["_path"]["segments"][1] != req.user) {
+                return next(new AppError("this trip does not belong to you", 403))
+            } else {
+                // DELETE ACTION
+                await user.update({ Trips: firestore.FieldValue.arrayRemove(trip_ref) })
+                await trip_ref.delete()
+                return res.status(200).json({ error: "" })
+            }
+        } else {
+            return next(AppError("Trip does not exist"), 404)
+        }
+    } catch (e) {
+        return next(new AppError("Bad request", 400))
     }
 })
 
