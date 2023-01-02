@@ -9,8 +9,8 @@ module.exports.decodeToken = async (req, res, next) => {
             req.user = decodeValue["user_id"]
             return next();
         }
-        return res.json({ message: 'Unauthorized' });
+        return res.status(403).json({ message: 'Unauthorized' });
     } catch (e) {
-        return res.json({ message: 'Internal Error' });
+        return res.status(500).json({ message: 'Internal Error' });
     }
 }
