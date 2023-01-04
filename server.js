@@ -99,6 +99,69 @@ app.get("/trips/:id", decodeToken, async (req, res, next) => {
 })
 
 
+app.get("/user", async (req, res) => { 
+    try {
+        await db.collection('Users').doc()
+        .create({                       //Creates Entry for Users
+            Trips: [],                  //
+            email: 'test@email.com',    //req.body.email ,
+            username: 'username'        //req.body.username
+        })
+            return res.status(200).send()
+
+        } catch (e) {
+            next(new AppError("Bad request", 400))
+        }
+    
+})
+
+app.get("/user/:id", async (req, res) => { 
+    const { id } = req.params
+
+    try {
+        const snap = await db.collection('Users').doc(id).get()
+
+        if (snap.exists) {
+            const data = snap.data();
+
+            const userItems = {
+                username: data.username,    //Username
+                email: data.email,          //Email Data
+                //Trips: data.Trips ,       //Shows Trips but its messy
+            }
+
+            return res.json(userItems)
+        }else{
+            res.json({ trips: "This user does not exist" })
+        }
+            return res.status(200).send()
+        } catch (e) {
+            next(new AppError("Bad request", 400))
+        }
+})
+
+/*
+app.get("/user/:id", decodeToken, async (req, res, next) => {
+    const { id } = req.params
+
+    try {
+        const snap = await db.collection('Users').doc(id).get()
+        if (snap.exists) {
+            const data = snap.data();
+            if (data["user"]["_path"]["segments"][1] != req.user) {
+                next(new AppError("this trip does not belong to you", 403))
+            }
+            return res.json(data)
+        } else {
+            next(AppError("Trip does not exist"), 403)
+        }
+
+    } catch (e) {
+
+    }
+})
+*/
+
 ///////////////////////////////////
 // Error routes
 
