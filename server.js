@@ -62,10 +62,8 @@ app.get("/dummy", async (req, res, next) => {
 app.get("/trips", decodeToken, async (req, res, next) => {
     try {
         const userRef = db.collection("Users").doc(req.user)
-        console.log(userRef)
         const snap = await db.collection('Trips').where("user", "==", userRef).get()
         // const snap = await db.collection('Trips').get()
-        console.log(snap.size)
         const data = []
         if (!snap.empty) {
             snap.forEach(doc => {
@@ -89,7 +87,7 @@ app.get("/trips/:id", decodeToken, async (req, res, next) => {
         if (snap.exists) {
             const data = snap.data();
             if (data["user"]["_path"]["segments"][1] != req.user) {
-                next(new AppError("this trip does not belong to you", 403))
+                return next(new AppError("this trip does not belong to you", 403))
             }
             return res.json(data)
         } else {
@@ -102,7 +100,7 @@ app.get("/trips/:id", decodeToken, async (req, res, next) => {
 
 
 app.post("/trips", decodeToken, async (req, res, next) => {
-    const { media = {}, point_coords = [], details = {} } = req.body
+    const { media = {}, point_coords = [], details = {}, title = "" } = req.body
     const user = await db.collection("Users").doc(req.user)
 
     details["end_time"] = new Date(details["end_time"])
@@ -117,7 +115,7 @@ app.post("/trips", decodeToken, async (req, res, next) => {
         coords.push(new admin.firestore.GeoPoint(point[0], point[1]))
     }
 
-    const data = { user, media, details, point_coords: coords }
+    const data = { user, media, details, point_coords: coords, title }
 
     try {
         const result = await db.collection('Trips').add(data)
@@ -149,6 +147,84 @@ app.delete("/trips/:id", decodeToken, async (req, res, next) => {
             return next(AppError("Trip does not exist"), 404)
         }
     } catch (e) {
+        return next(new AppError("Bad request", 400))
+    }
+})
+
+
+app.put("/trips/:id", decodeToken, async (req, res, next) => {
+    const { id } = req.params
+    try {
+        const trip_ref = await db.collection("Trips").doc(id)
+        const snap = await trip_ref.get()
+        if (snap.exists) {
+            const data = snap.data();
+            if (data["user"]["_path"]["segments"][1] != req.user) {
+                return next(new AppError("this trip does not belong to you", 403))
+            } else {
+                // UPDATE ACTION
+                const { media = {}, title = "" } = req.body
+                await trip_ref.update({ media: media, title: title })
+                return res.status(200).json({ error: "" })
+            }
+        } else {
+            return next(AppError("Trip does not exist"), 404)
+        }
+    } catch (e) {
+        return next(new AppError("Bad request", 400))
+    }
+})
+
+
+app.get("/user", decodeToken, async (req, res, next) => {
+    try {
+        const snap = await db.collection("Users").doc(req.user).get()
+        const data = snap.data();
+        return res.status(200).json(data)
+    } catch (e) {
+        return next(new AppError("Bad request", 400))
+    }
+})
+
+app.put("/user", decodeToken, async (req, res, next) => {
+    try {
+        const user = await db.collection("Users").doc(req.user)
+        const snap = await db.collection("Users").doc(req.user).get()
+        const data = snap.data()
+        const { username = data.username } = req.body
+        await user.update({ username: username })
+        const updatedData = await (await db.collection("Users").doc(req.user).get()).data()
+        return res.status(200).json(updatedData)
+    } catch (e) {
+        console.log(e.toString())
+        return next(new AppError("Bad request", 400))
+    }
+})
+
+app.delete("/user", decodeToken, async (req, res, next) => {
+    try {
+
+        // Delete from trips collection everything that belongs to this user
+        const userRef = await db.collection("Users").doc(req.user)
+        const snap = await db.collection('Trips').where("user", "==", userRef).get()
+
+        if (!snap.empty) {
+            for (let doc of snap.docs) {
+                let tripRef = await db.collection("Trips").doc(doc.id)
+                await tripRef.delete()
+            }
+        }
+
+        // remove user from the users collection
+        await userRef.delete()
+
+        //remove the user from authentication of firebase
+        await admin.auth().deleteUser(req.user)
+
+        return res.status(200).json({ "error": "" })
+
+    } catch (e) {
+        console.log(e.toString())
         return next(new AppError("Bad request", 400))
     }
 })
