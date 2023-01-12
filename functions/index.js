@@ -57,11 +57,11 @@ app.use((err, req, res, next) => {
 // /////////////////////////////////
 // Starting the server
 
-/* Use for Local Testing
+//Use for Local Testing
 app.listen(8080, () => {
-  console.log(`Listening on ${PORT}`);
+  console.log(`Listening on ${8080}`);
 });
-*/
+
 
 // module.exports = app;
 

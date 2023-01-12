@@ -9,7 +9,7 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "startapp": "node .",
-    "startdev": "nodemon server.js"
+    "startdev": "nodemon index.js"
   },
   "engines": {
     "node": "16"
