@@ -5,12 +5,11 @@ module.exports.decodeToken = async (req, res, next) => {
   try {
     const decodeValue = await admin.auth().verifyIdToken(token);
     if (decodeValue) {
-      console.log(decodeValue);
       req.user = decodeValue["user_id"];
       return next();
     }
-    return res.status(403).json({message: "Unauthorized"});
+    return res.status(403).json({ message: "Unauthorized" });
   } catch (e) {
-    return res.status(500).json({message: "Internal Error"});
+    return res.status(500).json({ message: "Internal Error" });
   }
 };
