@@ -73,7 +73,7 @@ tripRouter.post("/trips", decodeToken, async (req, res, next) => {
     const result = await db.collection("Trips").add(data);
     const trip_ref = await db.collection("Trips").doc(result.id);
     await user.update({ Trips: firestore.FieldValue.arrayUnion(trip_ref) });
-    return res.status(200).json({ error: "" });
+    return res.status(200).json({ error: "", tripId: result.id });
   } catch (e) {
     next(new AppError("Bad request. Could not create a trip", 400));
   }
