@@ -25,6 +25,7 @@ jobs:
       with:
         node-version: '16.x'  # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
         cache: 'npm'
+        cache-dependency-path: functions/package-lock.json
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
