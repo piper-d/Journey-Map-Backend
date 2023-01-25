@@ -8,10 +8,13 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    
+defaults:
+  run:
+    working-directory: functions
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
       
     steps:
@@ -20,6 +23,7 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '16.x'  # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        cache-dependency-path: functions/package-lock.json
         cache: 'npm'
     - run: npm ci
     - run: npm run build --if-present
