@@ -16,10 +16,12 @@ const db = admin.firestore();
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
 
-const FirebaseStorage = new Storage({
-  projectId: 'journeymap-a8e65',
-  keyFilename: '../functions/config/serviceAccountKey.json'
-});
+// const FirebaseStorage = new Storage({
+//   projectId: 'journeymap-a8e65',
+//   keyFilename: '../functions/config/serviceAccountKey.json'
+// });
+
+const FirebaseStorage = admin.storage()
 
 tripRouter.use((req, res, next) => {
   res.locals.currentUser = req.user;
@@ -161,7 +163,7 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single('image'), async (
         let originalName = req.file.originalname
         let buffer = req.file.buffer
 
-        const bucketName = `trip_${id}/`;
+        const bucketName = "journeymap-a8e65.appspot.com";
         const file = FirebaseStorage.bucket(bucketName).file(originalName);
         file.createWriteStream()
           .on('error', function (err) {
