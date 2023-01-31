@@ -1,6 +1,7 @@
 const request = require("supertest")
 const { execSync } = require("child_process");
-const { testApi } = require("./index")
+const { testApi } = require("./index");
+const { makeRandomName } = require("./utils/helperFunctions");
 require('dotenv').config();
 
 describe("GET / ", () => {
@@ -120,17 +121,7 @@ describe("GET /user", () => {
 
 
 describe("PUT /user", () => {
-    function makeUsername(length) {
-        var result = '';
-        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        var charactersLength = characters.length;
-        for (var i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
-
-    let newUsername = makeUsername(5)
+    let newUsername = makeRandomName(5)
     test("Update logged in user's information", async () => {
         let id = ""
         let stdout = execSync(`curl 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.API_KEY}' \
