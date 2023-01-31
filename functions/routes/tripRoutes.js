@@ -2,12 +2,12 @@
 // Requirements and dependencies
 const tripRouter = require("express").Router();
 const { decodeToken } = require("../middleware");
-const { findHourDifference, calculateDistance, findAverageSpeed } = require("../utils/helperFunctions");
+const { findHourDifference, calculateDistance, findAverageSpeed, makeRandomName, convertToJPEGBuffer } = require("../utils/helperFunctions");
 const { firestore } = require("firebase-admin");
-const { Storage } = require("@google-cloud/storage")
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer")
+
 
 
 // /////////////////////////////////
@@ -15,11 +15,6 @@ const multer = require("multer")
 const db = admin.firestore();
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
-
-// const FirebaseStorage = new Storage({
-//   projectId: 'journeymap-a8e65',
-//   keyFilename: '../functions/config/serviceAccountKey.json'
-// });
 
 const FirebaseStorage = admin.storage()
 
@@ -60,7 +55,7 @@ tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
       }
       return res.status(200).json(data);
     } else {
-      next(new AppError("Trip does not exist"), 404);
+      next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
     next(new AppError("Bad request", 400));
@@ -113,7 +108,7 @@ tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
         return res.status(200).json({ error: "" });
       }
     } else {
-      return next(new AppError("Trip does not exist"), 404);
+      return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
     return next(new AppError("Bad request", 400));
@@ -137,7 +132,7 @@ tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
         return res.status(200).json({ error: "" });
       }
     } else {
-      return next(new AppError("Trip does not exist"), 404);
+      return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
     return next(new AppError("Bad request", 400));
@@ -154,31 +149,59 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single('image'), async (
       if (data["user"]["_path"]["segments"][1] != req.user) {
         return next(new AppError("this trip does not belong to you", 403));
       } else {
-        // UPLOAD ACTION
+        // check if file is provided
 
         if (!req.file) {
-          return next(new AppError("No image file provided"), 400);
+          return next(new AppError("No image file provided", 400));
         }
 
-        let originalName = req.file.originalname
-        let buffer = req.file.buffer
+        // generate random name for file
 
+        let originalname = req.file.originalname.split('.')[0]
+        let extension = req.file.originalname.split('.')[1]
+        let buffer;
+        let fileName = ""
+        if (extension == 'HEIC' || extension == 'heic' || extension == 'heif' || extension == 'HEIF') {
+          buffer = await convertToJPEGBuffer(req.file.buffer)
+          fileName = originalname + makeRandomName(10) + '.jpeg'
+        } else {
+          fileName = originalname + makeRandomName(10) + '.' + extension
+          buffer = req.file.buffer
+        }
+
+        console.log(`FILENAME: ${fileName}`)
+        console.log(`FILETYPE: ${extension}`)
+
+        // upload file to firebase storage
         const bucketName = "journeymap-a8e65.appspot.com";
-        const file = FirebaseStorage.bucket(bucketName).file(originalName);
+        const file = FirebaseStorage.bucket(bucketName).file(fileName);
         file.createWriteStream()
           .on('error', function (err) {
             console.log(err);
           })
           .on('finish', function () {
-            console.log(`File ${originalName} uploaded to ${bucketName}.`);
+            console.log(`File ${fileName} uploaded to ${bucketName}.`);
           })
           .end(buffer);
+
+        // fetch the url of the newly generated 400x400 image
+        const compressedFileName = fileName.split('.')[0] + '_400x400.' + 'jpeg'
+        const compressedFileURL = await FirebaseStorage.bucket(bucketName).file(compressedFileName).getSignedUrl({ action: 'read', expires: '03-09-2491' })
+        const finalURL = compressedFileURL[0]
+        console.log(`FILEURL: ${finalURL}`)
+
+
+        // fetch metadata of the newly generated 400x400 image
+
+
+        // store it in firestore inside of corresponding trip at certain location
+
 
         return res.status(200).json({ error: "" })
 
       }
     } else {
-      return next(new AppError("Trip does not exist"), 404);
+      return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
     console.log(e)

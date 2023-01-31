@@ -1,3 +1,6 @@
+const sharp = require('sharp');
+
+
 const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
   if ((lat1 == lat2) && (lon1 == lon2)) {
     return 0;
@@ -36,3 +39,22 @@ module.exports.findHourDifference = (date1, date2) => {
 module.exports.findAverageSpeed = (hours, distance) => {
   return distance / hours;
 };
+
+
+module.exports.makeRandomName = (length) => {
+  var result = '';
+  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for (var i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+
+module.exports.convertToJPEGBuffer = async (heicBuffer) => {
+  const jpegBuffer = await sharp(heicBuffer)
+    .toFormat('jpeg')
+    .toBuffer();
+  return jpegBuffer;
+}
