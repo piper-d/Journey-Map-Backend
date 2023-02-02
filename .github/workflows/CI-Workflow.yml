@@ -15,7 +15,6 @@ defaults:
     
 jobs:
   build:
-
     runs-on: ubuntu-latest
       
     steps:
@@ -24,10 +23,15 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '16.x'  # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-        cache: 'npm'
         cache-dependency-path: functions/package-lock.json
+        cache: 'npm'
+        
+        #Creates File from Secrets
+    - uses: "finnp/create-file-action@master"
+      env:
+        FILE_NAME: "functions/config/serviceAccountKey.json"
+        FILE_BASE64: ${{secrets.SERVICE_ACCOUNT_KEY}}
+    
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
-    
-    
