@@ -1,4 +1,5 @@
-const sharp = require('sharp');
+const convert = require('heic-convert');
+
 
 
 const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
@@ -52,9 +53,12 @@ module.exports.makeRandomName = (length) => {
 }
 
 
-module.exports.convertToJPEGBuffer = async (heicBuffer) => {
-  const jpegBuffer = await sharp(heicBuffer)
-    .toFormat('jpeg')
-    .toBuffer();
-  return jpegBuffer;
+module.exports.convertToPNGBuffer = async (buffer) => {
+  const outputBuffer = await convert({
+    buffer: buffer, // the HEIC file buffer
+    format: 'PNG',  // output format
+    quality: 1      // the compression quality, between 0 and 1
+  });
+
+  return outputBuffer;
 }

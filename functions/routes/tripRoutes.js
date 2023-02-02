@@ -2,7 +2,7 @@
 // Requirements and dependencies
 const tripRouter = require("express").Router();
 const { decodeToken } = require("../middleware");
-const { findHourDifference, calculateDistance, findAverageSpeed, makeRandomName, convertToJPEGBuffer } = require("../utils/helperFunctions");
+const { findHourDifference, calculateDistance, findAverageSpeed, makeRandomName, convertToPNGBuffer } = require("../utils/helperFunctions");
 const { firestore } = require("firebase-admin");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
@@ -156,19 +156,19 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single('image'), async (
         }
 
         // generate random name for file
-
         let originalname = req.file.originalname.split('.')[0]
         let extension = req.file.originalname.split('.')[1]
         let buffer;
         let fileName = ""
+
+        // convert HEIC to PNG for optimum storage in object store
         if (extension == 'HEIC' || extension == 'heic' || extension == 'heif' || extension == 'HEIF') {
-          buffer = await convertToJPEGBuffer(req.file.buffer)
-          fileName = originalname + makeRandomName(10) + '.jpeg'
+          buffer = await convertToPNGBuffer(req.file.buffer)
+          fileName = originalname + makeRandomName(10) + '.png'
         } else {
           fileName = originalname + makeRandomName(10) + '.' + extension
           buffer = req.file.buffer
         }
-
         console.log(`FILENAME: ${fileName}`)
         console.log(`FILETYPE: ${extension}`)
 
