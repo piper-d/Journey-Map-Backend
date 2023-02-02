@@ -35,7 +35,7 @@ jobs:
     - name: Make envfile
       uses: SpicyPizza/create-envfile@v1.3
       with:
-        envkey_API_KEY: ${{secrets.ENV_API}}
+        envkey_API_KEY: ${{secrets.ENV_KEY}}
         envkey_TEST_EMAIL: ${{secrets.ENV_EMAIL}}
         envkey_TEST_PASSWORD: ${{secrets.ENV_PASS}}
         directory: functions
