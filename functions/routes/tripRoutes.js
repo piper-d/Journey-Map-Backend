@@ -2,13 +2,13 @@
 // Requirements and dependencies
 const tripRouter = require("express").Router();
 const { decodeToken } = require("../middleware");
-const { findHourDifference, calculateDistance, findAverageSpeed, makeRandomName, convertToPNGBuffer } = require("../utils/helperFunctions");
+const { findHourDifference, calculateDistance, findAverageSpeed, makeRandomName, convertToPNGBuffer, dms2dd } = require("../utils/helperFunctions");
 const { firestore } = require("firebase-admin");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer")
-
-
+const exif = require("exif-reader")
+const sharp = require('sharp');
 
 // /////////////////////////////////
 // Initialization
@@ -161,6 +161,37 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single('image'), async (
         let buffer;
         let fileName = ""
 
+
+
+
+        //extract metadata from image
+
+        const bufferTemp = req.file.buffer;
+
+        sharp(bufferTemp)
+          .metadata()
+          .then(metadata => {
+            // Check if the file has EXIF data
+            if (metadata.exif) {
+              // Parse the EXIF data using the exif library
+              const exifData = exif(metadata.exif);
+              console.log("THIS IS THE EXIF DATA: ", exifData)
+              // Check if the EXIF data has GPS information
+              if (exifData.gps) {
+                console.log('Latitude: ', exifData.gps.GPSLatitude);
+                console.log('Longitude: ', exifData.gps.GPSLongitude);
+                let latDegrees = dms2dd(exifData.gps.GPSLatitude[0], exifData.gps.GPSLatitude[1], exifData.gps.GPSLatitude[2], exifData.gps.GPSLatitudeRef)
+                let lonDegrees = dms2dd(exifData.gps.GPSLongitude[0], exifData.gps.GPSLongitude[1], exifData.gps.GPSLongitude[2], exifData.gps.GPSLongitudeRef)
+                console.log(`NEW LAT: ${latDegrees} NEW LON: ${lonDegrees}`)
+                // Log other GPS information as needed
+              } else {
+                console.log('No GPS information found in the EXIF data.');
+              }
+            } else {
+              console.log('No EXIF data found in the file.');
+            }
+          })
+
         // convert HEIC to PNG for optimum storage in object store
         if (extension == 'HEIC' || extension == 'heic' || extension == 'heif' || extension == 'HEIF') {
           buffer = await convertToPNGBuffer(req.file.buffer)
@@ -169,15 +200,13 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single('image'), async (
           fileName = originalname + makeRandomName(10) + '.' + extension
           buffer = req.file.buffer
         }
-        console.log(`FILENAME: ${fileName}`)
-        console.log(`FILETYPE: ${extension}`)
 
         // upload file to firebase storage
         const bucketName = "journeymap-a8e65.appspot.com";
         const file = FirebaseStorage.bucket(bucketName).file(fileName);
         file.createWriteStream()
           .on('error', function (err) {
-            console.log(err);
+            return next(new AppError(err, 400));
           })
           .on('finish', function () {
             console.log(`File ${fileName} uploaded to ${bucketName}.`);
@@ -190,11 +219,8 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single('image'), async (
         const finalURL = compressedFileURL[0]
         console.log(`FILEURL: ${finalURL}`)
 
-
-        // fetch metadata of the newly generated 400x400 image
-
-
         // store it in firestore inside of corresponding trip at certain location
+
 
 
         return res.status(200).json({ error: "" })

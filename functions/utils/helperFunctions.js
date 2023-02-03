@@ -1,7 +1,6 @@
 const convert = require('heic-convert');
 
 
-
 const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
   if ((lat1 == lat2) && (lon1 == lon2)) {
     return 0;
@@ -59,6 +58,14 @@ module.exports.convertToPNGBuffer = async (buffer) => {
     format: 'PNG',  // output format
     quality: 1      // the compression quality, between 0 and 1
   });
-
   return outputBuffer;
+}
+
+module.exports.dms2dd = (degrees, minutes, seconds, direction) => {
+  var dd = degrees + minutes / 60 + seconds / (60 * 60);
+
+  if (direction == "S" || direction == "W") {
+    dd = dd * -1;
+  } // Don't do anything for N or E
+  return dd;
 }
