@@ -15,7 +15,6 @@ defaults:
     
 jobs:
   build:
-
     runs-on: ubuntu-latest
       
     steps:
@@ -24,10 +23,25 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '16.x'  # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-        cache: 'npm'
         cache-dependency-path: functions/package-lock.json
+        cache: 'npm'
+        
+        #Creates File from Secrets
+    - uses: "finnp/create-file-action@master"
+      env:
+        FILE_NAME: "functions/config/serviceAccountKey.json"
+        FILE_BASE64: ${{secrets.SERVICE_ACCOUNT_KEY}}
+        
+    - name: Make envfile
+      uses: SpicyPizza/create-envfile@v1.3
+      with:
+        envkey_API_KEY: ${{secrets.ENV_KEY}}
+        envkey_TEST_EMAIL: ${{secrets.ENV_EMAIL}}
+        envkey_TEST_PASSWORD: ${{secrets.ENV_PASS}}
+        directory: functions
+        file_name: .env
+        fail_on_empty: true
+        
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
-    
-    
