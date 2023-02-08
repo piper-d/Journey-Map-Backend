@@ -2,6 +2,7 @@
 // Requirements and dependencies
 const functions = require("firebase-functions");
 const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 const express = require("express");
 const cors = require("cors");
 
@@ -22,7 +23,8 @@ app.use(cors({
   optionSuccessStatus: 200,
 }));
 
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(cookieParser());
 
 
