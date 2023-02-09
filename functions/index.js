@@ -64,9 +64,9 @@ app.use((err, req, res, next) => {
 // Starting the server
 
 //Use for Local Testing
-app.listen(8080, () => {
-  console.log(`Listening on ${8080}`);
-});
+//app.listen(8080, () => {
+// console.log(`Listening on ${8080}`);
+//});
 
 
 // Exporting for unit testing purposes
