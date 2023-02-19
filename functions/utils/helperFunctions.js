@@ -1,4 +1,4 @@
-const convert = require('heic-convert');
+const convert = require("heic-convert");
 
 
 const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
@@ -42,30 +42,30 @@ module.exports.findAverageSpeed = (hours, distance) => {
 
 
 module.exports.makeRandomName = (length) => {
-  var result = '';
-  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
+  let result = "";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
-}
+};
 
 
 module.exports.convertToPNGBuffer = async (buffer) => {
   const outputBuffer = await convert({
     buffer: buffer, // the HEIC file buffer
-    format: 'PNG',  // output format
-    quality: 1      // the compression quality, between 0 and 1
+    format: "PNG", // output format
+    quality: 1, // the compression quality, between 0 and 1
   });
   return outputBuffer;
-}
+};
 
 module.exports.dms2dd = (degrees, minutes, seconds, direction) => {
-  var dd = degrees + minutes / 60 + seconds / (60 * 60);
+  let dd = degrees + minutes / 60 + seconds / (60 * 60);
 
   if (direction == "S" || direction == "W") {
     dd = dd * -1;
   } // Don't do anything for N or E
   return dd;
-}
+};
