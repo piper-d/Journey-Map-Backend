@@ -23,7 +23,7 @@ app.use(cors({
   optionSuccessStatus: 200,
 }));
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -32,14 +32,14 @@ app.use(cookieParser());
 // Routes
 
 app.get("/", (req, res) => {
-  return res.status(200).json({ message: "connected to the backend" })
-})
+  return res.status(200).json({message: "connected to the backend"});
+});
 
 app.get("/dummy", async (req, res) => {
   return res.json({
     tasks: [
-      { title: "Task1" },
-      { title: "Task2" },
+      {title: "Task1"},
+      {title: "Task2"},
     ],
   });
 });
@@ -55,23 +55,23 @@ app.all("*", (req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-  const { statusCode = 500 } = err;
+  const {statusCode = 500} = err;
   if (!err.message) err.message = "Oh No, Something Went Wrong!";
-  res.status(statusCode).json({ "error": err });
+  res.status(statusCode).json({"error": err});
 });
 
 // /////////////////////////////////
 // Starting the server
 
-//Use for Local Testing
-//app.listen(8080, () => {
+// Use for Local Testing
+// app.listen(8080, () => {
 // console.log(`Listening on ${8080}`);
-//});
+// });
 
 
-// Exporting for unit testing purposes
-exports.testApi = app
+// Exporting for unit testing purposesS
+exports.testApi = app;
 
-//Uncomment for deployment
+// Uncomment for deployment
 //exports.app = functions.region("us-east1").https.onRequest(app);
 

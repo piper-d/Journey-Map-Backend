@@ -2,7 +2,7 @@
 // Requirements and dependencies
 
 const userRouter = require("express").Router();
-const { decodeToken } = require("../middleware");
+const {decodeToken} = require("../middleware");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 
@@ -31,8 +31,8 @@ userRouter.put("/user", decodeToken, async (req, res, next) => {
     const user = await db.collection("Users").doc(req.user);
     const snap = await db.collection("Users").doc(req.user).get();
     const data = snap.data();
-    const { username = data.username } = req.body;
-    await user.update({ username: username });
+    const {username = data.username} = req.body;
+    await user.update({username: username});
     const updatedData = await (await db.collection("Users").doc(req.user).get()).data();
     return res.status(200).json(updatedData);
   } catch (e) {
@@ -60,7 +60,7 @@ userRouter.delete("/user", decodeToken, async (req, res, next) => {
     // remove the user from authentication of firebase
     await admin.auth().deleteUser(req.user);
 
-    return res.status(200).json({ "error": "" });
+    return res.status(200).json({"error": ""});
   } catch (e) {
     console.log(e.toString());
     return next(new AppError("Bad request", 400));

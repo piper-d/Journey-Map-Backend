@@ -8,6 +8,7 @@ module.exports = {
     "eslint:recommended",
     "google",
   ],
+  ignorePatterns: ["*.test.js"],
   rules: {
     "quotes": ["error", "double"],
     "max-len": ["error", {"code": 200, "tabWidth": 4}],
