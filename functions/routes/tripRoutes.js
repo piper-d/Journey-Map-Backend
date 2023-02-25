@@ -25,11 +25,13 @@ tripRouter.get("/trips", decodeToken, async (req, res, next) => {
   try {
     const userRef = db.collection("Users").doc(req.user);
     const snap = await db.collection("Trips").where("user", "==", userRef).get();
-    // const snap = await db.collection('Trips').get()
     const data = [];
     if (!snap.empty) {
       snap.forEach((doc) => {
-        data.push(doc.data());
+        console.log(doc.id)
+        let pushData = doc.data()
+        pushData.id = doc.id
+        data.push(pushData);
       });
       return res.status(200).json(data);
     } else {
