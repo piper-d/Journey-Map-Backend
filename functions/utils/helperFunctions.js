@@ -69,3 +69,13 @@ module.exports.dms2dd = (degrees, minutes, seconds, direction) => {
   } // Don't do anything for N or E
   return dd;
 };
+
+
+module.exports.waitForFieldChange = async (asyncFunction, field, expectedValue) => {
+  let result = await asyncFunction();
+  while (result[field] !== expectedValue) {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+    result = await asyncFunction();
+  }
+  return result;
+}
