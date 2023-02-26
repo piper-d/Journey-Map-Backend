@@ -1,0 +1,14 @@
+{
+    "timeline": {
+        "background": "#000000",
+        "tracks": [
+            {
+                "clips": []
+            }
+        ]
+    },
+    "output": {
+        "format": "mp4",
+        "resolution": "hd"
+    }
+}

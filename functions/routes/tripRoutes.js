@@ -2,11 +2,14 @@
 // Requirements and dependencies
 const tripRouter = require("express").Router();
 const { decodeToken } = require("../middleware");
-const { makeRandomName, convertToPNGBuffer } = require("../utils/helperFunctions");
+const { makeRandomName, convertToPNGBuffer, waitForFieldChange } = require("../utils/helperFunctions");
 const { firestore } = require("firebase-admin");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer");
+const fs = require('fs');
+const Shotstack = require('shotstack-sdk');
+require('dotenv').config();
 
 // /////////////////////////////////
 // Initialization
@@ -28,7 +31,6 @@ tripRouter.get("/trips", decodeToken, async (req, res, next) => {
     const data = [];
     if (!snap.empty) {
       snap.forEach((doc) => {
-        console.log(doc.id)
         let pushData = doc.data()
         pushData.id = doc.id
         data.push(pushData);
@@ -38,8 +40,7 @@ tripRouter.get("/trips", decodeToken, async (req, res, next) => {
       res.status(200).json({ trips: "you currently have no trips" });
     }
   } catch (e) {
-    console.log(e);
-    next(new AppError(e, 400));
+    return next(new AppError(e, 400));
   }
 });
 
@@ -55,10 +56,10 @@ tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
       }
       return res.status(200).json({ data, error: "" });
     } else {
-      next(new AppError("Trip does not exist", 404));
+      return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    next(new AppError(e, 400));
+    return next(new AppError(e, 400));
   }
 });
 
@@ -80,7 +81,7 @@ tripRouter.post("/trips", decodeToken, async (req, res, next) => {
     await user.update({ Trips: firestore.FieldValue.arrayUnion(trip_ref) });
     return res.status(200).json({ error: "", tripId: result.id });
   } catch (e) {
-    next(new AppError("Bad request. Could not create a trip", 400));
+    return next(new AppError("Bad request. Could not create a trip", 400));
   }
 });
 
@@ -230,7 +231,6 @@ tripRouter.delete("/trips/:id/media", decodeToken, upload.single("image"), async
   const { id } = req.params;
   const { latitude, longitude, url } = req.body;
   const fileName = url.split("appspot.com/")[1];
-  console.log(fileName);
   try {
     const trip_ref = await db.collection("Trips").doc(id);
     const snap = await trip_ref.get();
@@ -277,5 +277,98 @@ tripRouter.delete("/trips/:id/media", decodeToken, upload.single("image"), async
     return next(new AppError(e, 400));
   }
 });
+
+
+
+tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const snap = await db.collection("Trips").doc(id).get();
+    if (snap.exists) {
+      const data = snap.data();
+      if (data["user"]["_path"]["segments"][1] != req.user) {
+        return next(new AppError("this trip does not belong to you", 403));
+      } else {
+        //EXPORT ACTION
+
+        // get all coordinates of the trip
+        const point_coords = data['point_coords']
+        let media_urls = []
+
+        //get all media files of the trip
+        if (data["media"]) {
+          iterableData = data["media"]
+          for (let [coords, urls] of Object.entries(iterableData)) {
+            for (let url of urls) {
+              media_urls.push(url)
+            }
+          }
+
+          //initialize the shostack client
+          const defaultClient = Shotstack.ApiClient.instance;
+          defaultClient.basePath = 'https://api.shotstack.io/stage';
+          const DeveloperKey = defaultClient.authentications['DeveloperKey'];
+          DeveloperKey.apiKey = process.env.SHOTSTACK_API_KEY;
+
+
+          // create the template
+          let start = 0
+          let length = 3
+
+          let imageAsset;
+
+          for (let url of media_urls) {
+            imageAsset = new Shotstack.ImageAsset;
+            imageAsset
+              .setSrc(url)
+            start += length
+          }
+
+          let imageClip = new Shotstack.Clip;
+          imageClip
+            .setAsset(imageAsset)
+            .setStart(0)
+            .setLength(9)
+
+          let track = new Shotstack.Track;
+          track.setClips([imageClip]);
+
+          let timeline = new Shotstack.Timeline;
+          timeline.setTracks([track]);
+
+          let output = new Shotstack.Output;
+          output
+            .setFormat('mp4')
+            .setResolution('sd');
+
+          let edit = new Shotstack.Edit;
+          edit
+            .setTimeline(timeline)
+            .setOutput(output);
+
+          // render the template
+          const api = new Shotstack.EditApi();
+          const render = await api.postRender(edit)
+
+          async function getRenderStatus() {
+            const response = await api.getRender(render.response.id);
+            return response.response;
+          }
+
+          const result = await waitForFieldChange(getRenderStatus, 'status', 'done');
+          return res.status(200).json({ error: "", downloadLink: result.url });
+
+        } else {
+          return next(new AppError("No media files found", 400));
+        }
+      }
+    } else {
+      next(new AppError("Trip does not exist", 404));
+    }
+  } catch (e) {
+    console.log(e)
+    return next(new AppError(e, 400));
+  }
+})
 
 module.exports = tripRouter;
