@@ -81,6 +81,7 @@ tripRouter.post("/trips", decodeToken, async (req, res, next) => {
     await user.update({ Trips: firestore.FieldValue.arrayUnion(trip_ref) });
     return res.status(200).json({ error: "", tripId: result.id });
   } catch (e) {
+    console.log(e)
     return next(new AppError("Bad request. Could not create a trip", 400));
   }
 });
@@ -314,24 +315,24 @@ tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
           // create the template
           let start = 0
           let length = 3
-
-          let imageAsset;
+          let imageClips = []
 
           for (let url of media_urls) {
-            imageAsset = new Shotstack.ImageAsset;
-            imageAsset
-              .setSrc(url)
+            let imageAsset = new Shotstack.ImageAsset;
+            imageAsset.setSrc(url)
+            let imageClip = new Shotstack.Clip;
+            imageClip
+              .setAsset(imageAsset)
+              .setStart(start)
+              .setLength(length)
+              .setScale(0.5)
+
+            imageClips.push(imageClip)
             start += length
           }
 
-          let imageClip = new Shotstack.Clip;
-          imageClip
-            .setAsset(imageAsset)
-            .setStart(0)
-            .setLength(9)
-
           let track = new Shotstack.Track;
-          track.setClips([imageClip]);
+          track.setClips(imageClips);
 
           let timeline = new Shotstack.Timeline;
           timeline.setTracks([track]);
