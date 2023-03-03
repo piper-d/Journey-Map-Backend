@@ -2,12 +2,11 @@
 // Requirements and dependencies
 const tripRouter = require("express").Router();
 const { decodeToken } = require("../middleware");
-const { makeRandomName, convertToPNGBuffer, waitForFieldChange } = require("../utils/helperFunctions");
+const { makeRandomName, convertToPNGBuffer, waitForFieldChange, prepareGoogleMaps } = require("../utils/helperFunctions");
 const { firestore } = require("firebase-admin");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer");
-const fs = require('fs');
 const Shotstack = require('shotstack-sdk');
 require('dotenv').config();
 
@@ -293,10 +292,18 @@ tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
         //EXPORT ACTION
 
         // get all coordinates of the trip
-        const point_coords = data['point_coords']
-        let media_urls = []
+        const points_array = []
+        data['point_coords'].forEach((doc) => {
+          const { latitude, longitude } = doc
+          points_array.push([latitude, longitude])
+        });
+
+        // get the map url
+        let mapURL = prepareGoogleMaps(points_array)
 
         //get all media files of the trip
+        let media_urls = []
+        media_urls.push(mapURL)
         if (data["media"]) {
           iterableData = data["media"]
           for (let [coords, urls] of Object.entries(iterableData)) {
@@ -371,5 +378,4 @@ tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
     return next(new AppError(e, 400));
   }
 })
-
 module.exports = tripRouter;
