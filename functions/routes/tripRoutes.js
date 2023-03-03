@@ -81,7 +81,7 @@ tripRouter.post("/trips", decodeToken, async (req, res, next) => {
     return res.status(200).json({ error: "", tripId: result.id });
   } catch (e) {
     console.log(e)
-    return next(new AppError("Bad request. Could not create a trip", 400));
+    return next(new AppError(`Bad request. Could not create a trip, ${e}`, 400));
   }
 });
 
@@ -371,7 +371,7 @@ tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
         }
       }
     } else {
-      next(new AppError("Trip does not exist", 404));
+      return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
     console.log(e)
