@@ -22,7 +22,7 @@ userRouter.get("/user", decodeToken, async (req, res, next) => {
     const data = snap.data();
     return res.status(200).json(data);
   } catch (e) {
-    return next(new AppError("Bad request", 400));
+    return next(new AppError(`Bad request, ${e}`, 400));
   }
 });
 
@@ -36,8 +36,7 @@ userRouter.put("/user", decodeToken, async (req, res, next) => {
     const updatedData = await (await db.collection("Users").doc(req.user).get()).data();
     return res.status(200).json(updatedData);
   } catch (e) {
-    console.log(e.toString());
-    return next(new AppError("Bad request", 400));
+    return next(new AppError(`Bad request, ${e}`, 400));
   }
 });
 
@@ -66,7 +65,7 @@ userRouter.delete("/user", decodeToken, async (req, res, next) => {
                   .then(() => {
                     console.log("Successfully deleted image from Object Store");
                   }).catch((err) => {
-                    return next(new AppError("could not delete image from object storage", 400));
+                    return next(new AppError(`could not delete image from object storage, ${err}`, 400));
                   });
               }
             }
@@ -85,8 +84,7 @@ userRouter.delete("/user", decodeToken, async (req, res, next) => {
 
     return res.status(200).json({ "error": "" });
   } catch (e) {
-    console.log(e.toString());
-    return next(new AppError("Bad request", 400));
+    return next(new AppError(`Bad request, ${e}`, 400));
   }
 });
 
