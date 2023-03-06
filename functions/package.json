@@ -44,7 +44,8 @@
     "sharp": "^0.31.3",
     "shotstack-sdk": "^0.2.2",
     "supertest": "^6.3.3",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "helmet": "6.0.1"
   },
   "devDependencies": {
     "eslint": "^8.9.0",
