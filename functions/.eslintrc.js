@@ -15,6 +15,9 @@ module.exports = {
     "require-jsdoc": 0,
     "new-cap": 0,
     "camelcase": 0,
+    "no-undef": 0,
+    "no-unused-vars": 0,
+    "no-inner-declarations": 0,
   },
   parserOptions: {
     ecmaVersion: 8,
