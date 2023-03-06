@@ -45,7 +45,8 @@
     "shotstack-sdk": "^0.2.2",
     "supertest": "^6.3.3",
     "util": "^0.12.5",
-    "helmet": "6.0.1"
+    "helmet": "^6.0.1",
+    "@mapbox/polyline": "^1.1.1"
   },
   "devDependencies": {
     "eslint": "^8.9.0",
