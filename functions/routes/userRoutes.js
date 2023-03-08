@@ -20,7 +20,11 @@ userRouter.get("/user", decodeToken, async (req, res, next) => {
   try {
     const snap = await db.collection("Users").doc(req.user).get();
     const data = snap.data();
-    return res.status(200).json(data);
+    const returnBody = {
+      username: data.username,
+      email: data.email
+    }
+    return res.status(200).json(returnBody);
   } catch (e) {
     return next(new AppError(`Bad request, ${e}`, 400));
   }
