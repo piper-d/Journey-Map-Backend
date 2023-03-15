@@ -22,7 +22,7 @@
     "@google-cloud/storage": "^6.9.1",
     "@mapbox/polyline": "^1.1.1",
     "body-parser": "^1.20.1",
-    "busboy": "^1.6.0",
+    "busboy": "^1.4.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
