@@ -1,27 +1,27 @@
 // /////////////////////////////////
 // Requirements and dependencies
 const tripRouter = require("express").Router();
-const { decodeToken } = require("../middleware");
-const { makeRandomName, convertToPNGBuffer, waitForFieldChange, prepareGoogleMaps } = require("../utils/helperFunctions");
-const { firestore } = require("firebase-admin");
+const {decodeToken} = require("../middleware");
+const {makeRandomName, convertToPNGBuffer, waitForFieldChange, prepareGoogleMaps} = require("../utils/helperFunctions");
+const {firestore} = require("firebase-admin");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer");
 const multerGoogleStorage = require("multer-cloud-storage");
-const Shotstack = require('shotstack-sdk');
-require('dotenv').config();
+const Shotstack = require("shotstack-sdk");
+require("dotenv").config();
 
 // /////////////////////////////////
 // Initialization
 const db = admin.firestore();
 const storage = multerGoogleStorage.storageEngine({
-  projectId: 'journeymap-a8e65',
-  keyFilename: './config/serviceAccountKey.json',
-  bucket: 'journeymap-a8e65.appspot.com',
-  acl: 'publicread',
-  contentType: multerGoogleStorage.AUTO_CONTENT_TYPE
+  projectId: "journeymap-a8e65",
+  keyFilename: "./config/serviceAccountKey.json",
+  bucket: "journeymap-a8e65.appspot.com",
+  acl: "publicread",
+  contentType: multerGoogleStorage.AUTO_CONTENT_TYPE,
 });
-const upload = multer({ storage: storage }).single('image');
+const upload = multer({storage: storage}).single("image");
 
 const FirebaseStorage = admin.storage();
 
@@ -37,13 +37,13 @@ tripRouter.get("/trips", decodeToken, async (req, res, next) => {
     const data = [];
     if (!snap.empty) {
       snap.forEach((doc) => {
-        let pushData = doc.data()
-        pushData.id = doc.id
+        const pushData = doc.data();
+        pushData.id = doc.id;
         data.push(pushData);
       });
       return res.status(200).json(data);
     } else {
-      res.status(200).json({ trips: "you currently have no trips" });
+      res.status(200).json({trips: "you currently have no trips"});
     }
   } catch (e) {
     return next(new AppError(e, 400));
@@ -51,7 +51,7 @@ tripRouter.get("/trips", decodeToken, async (req, res, next) => {
 });
 
 tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
 
   try {
     const snap = await db.collection("Trips").doc(id).get();
@@ -60,7 +60,7 @@ tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
       if (data["user"]["_path"]["segments"][1] != req.user) {
         return next(new AppError("this trip does not belong to you", 403));
       }
-      return res.status(200).json({ data, error: "" });
+      return res.status(200).json({data, error: ""});
     } else {
       return next(new AppError("Trip does not exist", 404));
     }
@@ -71,7 +71,7 @@ tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
 
 
 tripRouter.post("/trips", decodeToken, async (req, res, next) => {
-  const { point_coords = [], details = {}, title = "" } = req.body;
+  const {point_coords = [], details = {}, title = ""} = req.body;
   const user = await db.collection("Users").doc(req.user);
 
   const coords = [];
@@ -79,21 +79,21 @@ tripRouter.post("/trips", decodeToken, async (req, res, next) => {
     coords.push(new admin.firestore.GeoPoint(point[0], point[1]));
   }
 
-  const data = { user, details, point_coords: coords, title };
+  const data = {user, details, point_coords: coords, title};
 
   try {
     const result = await db.collection("Trips").add(data);
     const trip_ref = await db.collection("Trips").doc(result.id);
-    await user.update({ Trips: firestore.FieldValue.arrayUnion(trip_ref) });
-    return res.status(200).json({ error: "", tripId: result.id });
+    await user.update({Trips: firestore.FieldValue.arrayUnion(trip_ref)});
+    return res.status(200).json({error: "", tripId: result.id});
   } catch (e) {
-    console.log(e)
+    console.log(e);
     return next(new AppError(`Bad request. Could not create a trip, ${e}`, 400));
   }
 });
 
 tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
     const user = await db.collection("Users").doc(req.user);
     const trip_ref = await db.collection("Trips").doc(id);
@@ -106,28 +106,28 @@ tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
         // DELETE ACTION
 
         // remove from user's trips
-        await user.update({ Trips: firestore.FieldValue.arrayRemove(trip_ref) });
+        await user.update({Trips: firestore.FieldValue.arrayRemove(trip_ref)});
 
-        //delete the media files from object storage associated with that trip before deleting the trip
+        // delete the media files from object storage associated with that trip before deleting the trip
         if (data["media"]) {
-          iterableData = data["media"]
-          for (let [coords, urls] of Object.entries(iterableData)) {
-            for (let url of urls) {
+          iterableData = data["media"];
+          for (const [coords, urls] of Object.entries(iterableData)) {
+            for (const url of urls) {
               const fileName = url.split("appspot.com/")[1];
               const bucketName = "journeymap-a8e65.appspot.com";
               const file = FirebaseStorage.bucket(bucketName).file(fileName);
               file.delete()
-                .then(() => {
-                  console.log("Successfully deleted image from Object Store");
-                }).catch((err) => {
-                  return next(new AppError("could not delete image from object storage", 400));
-                });
+                  .then(() => {
+                    console.log("Successfully deleted image from Object Store");
+                  }).catch((err) => {
+                    return next(new AppError("could not delete image from object storage", 400));
+                  });
             }
           }
         }
-        //delete the trip itself
+        // delete the trip itself
         await trip_ref.delete();
-        return res.status(200).json({ error: "" });
+        return res.status(200).json({error: ""});
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
@@ -139,7 +139,7 @@ tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
 
 
 tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
     const trip_ref = await db.collection("Trips").doc(id);
     const snap = await trip_ref.get();
@@ -149,9 +149,9 @@ tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
         return next(new AppError("this trip does not belong to you", 403));
       } else {
         // UPDATE ACTION
-        const { title = data["title"] } = req.body;
-        await trip_ref.update({ title: title });
-        return res.status(200).json({ error: "" });
+        const {title = data["title"]} = req.body;
+        await trip_ref.update({title: title});
+        return res.status(200).json({error: ""});
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
@@ -286,9 +286,8 @@ tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
 // });
 
 
-
-tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
+  const {id} = req.params;
   try {
     const snap = await db.collection("Trips").doc(id).get();
     if (snap.exists) {
@@ -296,83 +295,82 @@ tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
       if (data["user"]["_path"]["segments"][1] != req.user) {
         return next(new AppError("this trip does not belong to you", 403));
       } else {
-        //EXPORT ACTION
+        // EXPORT ACTION
 
         // get all coordinates of the trip
-        const points_array = []
-        data['point_coords'].forEach((doc) => {
-          const { latitude, longitude } = doc
-          points_array.push([latitude, longitude])
+        const points_array = [];
+        data["point_coords"].forEach((doc) => {
+          const {latitude, longitude} = doc;
+          points_array.push([latitude, longitude]);
         });
 
         // get the map url
-        let mapURL = prepareGoogleMaps(points_array)
+        const mapURL = prepareGoogleMaps(points_array);
 
-        //get all media files of the trip
-        let media_urls = []
-        media_urls.push(mapURL)
+        // get all media files of the trip
+        const media_urls = [];
+        media_urls.push(mapURL);
         if (data["media"]) {
-          iterableData = data["media"]
-          for (let [coords, urls] of Object.entries(iterableData)) {
-            for (let url of urls) {
-              media_urls.push(url)
+          iterableData = data["media"];
+          for (const [coords, urls] of Object.entries(iterableData)) {
+            for (const url of urls) {
+              media_urls.push(url);
             }
           }
 
-          //initialize the shostack client
+          // initialize the shostack client
           const defaultClient = Shotstack.ApiClient.instance;
-          defaultClient.basePath = 'https://api.shotstack.io/stage';
-          const DeveloperKey = defaultClient.authentications['DeveloperKey'];
+          defaultClient.basePath = "https://api.shotstack.io/stage";
+          const DeveloperKey = defaultClient.authentications["DeveloperKey"];
           DeveloperKey.apiKey = process.env.SHOTSTACK_API_KEY;
 
 
           // create the template
-          let start = 0
-          let length = 3
-          let imageClips = []
+          let start = 0;
+          const length = 3;
+          const imageClips = [];
 
-          for (let url of media_urls) {
-            let imageAsset = new Shotstack.ImageAsset;
-            imageAsset.setSrc(url)
-            let imageClip = new Shotstack.Clip;
+          for (const url of media_urls) {
+            const imageAsset = new Shotstack.ImageAsset;
+            imageAsset.setSrc(url);
+            const imageClip = new Shotstack.Clip;
             imageClip
-              .setAsset(imageAsset)
-              .setStart(start)
-              .setLength(length)
-              .setScale(0.5)
+                .setAsset(imageAsset)
+                .setStart(start)
+                .setLength(length)
+                .setScale(0.5);
 
-            imageClips.push(imageClip)
-            start += length
+            imageClips.push(imageClip);
+            start += length;
           }
 
-          let track = new Shotstack.Track;
+          const track = new Shotstack.Track;
           track.setClips(imageClips);
 
-          let timeline = new Shotstack.Timeline;
+          const timeline = new Shotstack.Timeline;
           timeline.setTracks([track]);
 
-          let output = new Shotstack.Output;
+          const output = new Shotstack.Output;
           output
-            .setFormat('mp4')
-            .setResolution('sd');
+              .setFormat("mp4")
+              .setResolution("sd");
 
-          let edit = new Shotstack.Edit;
+          const edit = new Shotstack.Edit;
           edit
-            .setTimeline(timeline)
-            .setOutput(output);
+              .setTimeline(timeline)
+              .setOutput(output);
 
           // render the template
           const api = new Shotstack.EditApi();
-          const render = await api.postRender(edit)
+          const render = await api.postRender(edit);
 
           async function getRenderStatus() {
             const response = await api.getRender(render.response.id);
             return response.response;
           }
 
-          const result = await waitForFieldChange(getRenderStatus, 'status', 'done');
-          return res.status(200).json({ error: "", downloadLink: result.url });
-
+          const result = await waitForFieldChange(getRenderStatus, "status", "done");
+          return res.status(200).json({error: "", downloadLink: result.url});
         } else {
           return next(new AppError("No media files found", 400));
         }
@@ -381,28 +379,26 @@ tripRouter.get('/trips/:id/export', decodeToken, async (req, res, next) => {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    console.log(e)
+    console.log(e);
     return next(new AppError(e, 400));
   }
-})
+});
 
 
-tripRouter.post('/trips/:id/test', decodeToken, async (req, res, next) => {
+tripRouter.post("/trips/:id/test", decodeToken, async (req, res, next) => {
   try {
-
     upload(req, res, (err) => {
       if (err) {
         console.error(err);
-        return res.status(500).send('Failed to upload file');
+        return res.status(500).send("Failed to upload file");
       }
 
       console.log(req.file);
-      return res.status(200).send('File uploaded successfully');
+      return res.status(200).send("File uploaded successfully");
     });
-  }
-  catch (e) {
-    console.log(e)
+  } catch (e) {
+    console.log(e);
     return next(new AppError(e, 400));
   }
-})
+});
 module.exports = tripRouter;
