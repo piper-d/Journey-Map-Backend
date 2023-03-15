@@ -1,6 +1,6 @@
 const convert = require("heic-convert");
-const polyline = require('@mapbox/polyline');
-require('dotenv').config();
+const polyline = require("@mapbox/polyline");
+require("dotenv").config();
 
 const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
   if ((lat1 == lat2) && (lon1 == lon2)) {
@@ -79,9 +79,9 @@ module.exports.waitForFieldChange = async (asyncFunction, field, expectedValue) 
     result = await asyncFunction();
   }
   return result;
-}
+};
 
 module.exports.prepareGoogleMaps = (geopoints) => {
   const polylineData = polyline.encode(geopoints);
   return `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=weight:5%7Ccolor:red%7Cenc:${polylineData}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
-}
+};
