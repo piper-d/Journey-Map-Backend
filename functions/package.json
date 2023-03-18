@@ -35,6 +35,7 @@
     "firebase": "^9.15.0",
     "firebase-admin": "^11.4.1",
     "firebase-functions": "^4.1.1",
+    "firebase-tools": "^11.24.1",
     "g": "^2.0.1",
     "gm": "^1.25.0",
     "heic-convert": "^1.2.4",

@@ -95,5 +95,5 @@ app.use((err, req, res, next) => {
 exports.testApi = app;
 
 // Uncomment for deployment
-// exports.app = functions.region("us-east1").https.onRequest(app);
+exports.app = functions.region("us-east1").https.onRequest(app);
 
