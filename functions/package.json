@@ -50,6 +50,7 @@
     "retire": "^3.2.3",
     "sharp": "^0.31.3",
     "shotstack-sdk": "^0.2.2",
+    "streamifier": "^0.1.1",
     "supertest": "^6.3.3",
     "util": "^0.12.5"
   },
