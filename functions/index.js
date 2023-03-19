@@ -3,6 +3,7 @@
 const functions = require("firebase-functions");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
+const multer = require("multer");
 const express = require("express");
 
 // Security
@@ -20,7 +21,14 @@ const userRoutes = require("./routes/userRoutes");
 // /////////////////////////////////
 // Initializing the app
 const app = express();
-
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // /////////////////////////////////
 // Middleware
@@ -29,16 +37,8 @@ app.use(cors({
   credentials: true, // access-control-allow-credentials:true
   optionSuccessStatus: 200,
 }));
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
-
-// Apply the rate limiting middleware to all requests
 app.use(limiter);
+app.use(upload.single('image'))
 app.use(mongoSanitize());
 app.use(helmet());
 app.use(hpp());
@@ -48,10 +48,6 @@ app.use(cookieParser());
 
 // /////////////////////////////////
 // Routes
-
-app.use(function (req, res, next) {
-  next();
-});
 
 app.get("/", (req, res) => {
   return res.status(200).json({ message: "connected to the backend" });
