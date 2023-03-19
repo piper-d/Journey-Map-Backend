@@ -3,7 +3,6 @@
 const functions = require("firebase-functions");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-const multer = require("multer");
 const express = require("express");
 
 // Security
@@ -21,8 +20,6 @@ const userRoutes = require("./routes/userRoutes");
 // /////////////////////////////////
 // Initializing the app
 const app = express();
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
@@ -38,11 +35,10 @@ app.use(cors({
   optionSuccessStatus: 200,
 }));
 app.use(limiter);
-app.use(upload.single('image'))
 app.use(mongoSanitize());
 app.use(helmet());
 app.use(hpp());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
