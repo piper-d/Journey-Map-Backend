@@ -58,22 +58,22 @@ userRouter.delete("/user", decodeToken, async (req, res, next) => {
         const snap_media = await tripRef.get();
         if (snap_media.exists) {
           const data = snap_media.data();
-          // if (data["media"]) {
-          //   iterableData = data["media"];
-          //   for (const [coords, urls] of Object.entries(iterableData)) {
-          //     for (const url of urls) {
-          //       const fileName = url.split("appspot.com/")[1];
-          //       const bucketName = "journeymap-a8e65.appspot.com";
-          //       const file = FirebaseStorage.bucket(bucketName).file(fileName);
-          //       file.delete()
-          //         .then(() => {
-          //           console.log("Successfully deleted image from Object Store");
-          //         }).catch((err) => {
-          //           return next(new AppError(`could not delete image from object storage, ${err}`, 400));
-          //         });
-          //     }
-          //   }
-          // }
+          if (data["media"]) {
+            iterableData = data["media"];
+            for (const [coords, urls] of Object.entries(iterableData)) {
+              for (const url of urls) {
+                const fileName = url.split("appspot.com/")[1];
+                const bucketName = "journeymap-a8e65.appspot.com";
+                const file = FirebaseStorage.bucket(bucketName).file(fileName);
+                file.delete()
+                  .then(() => {
+                    console.log("Successfully deleted image from Object Store");
+                  }).catch((err) => {
+                    return next(new AppError(`could not delete image from object storage, ${err}`, 400));
+                  });
+              }
+            }
+          }
         }
         // delete the trip from the trips collection
         await tripRef.delete();
