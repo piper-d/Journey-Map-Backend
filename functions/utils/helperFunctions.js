@@ -1,5 +1,9 @@
 const convert = require("heic-convert");
 const polyline = require("@mapbox/polyline");
+const Busboy = require("busboy");
+const os = require("os");
+const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
@@ -84,4 +88,60 @@ module.exports.waitForFieldChange = async (asyncFunction, field, expectedValue) 
 module.exports.prepareGoogleMaps = (geopoints) => {
   const polylineData = polyline.encode(geopoints);
   return `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=weight:5%7Ccolor:red%7Cenc:${polylineData}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+};
+
+module.exports.extractMultipartFormData = (req) => {
+  return new Promise((resolve, reject) => {
+    const busboy = Busboy({headers: req.headers});
+    const tmpdir = os.tmpdir();
+    const fields = {};
+    const fileWrites = [];
+    const uploads = {};
+
+    busboy.on("field", (fieldname, val) => (fields[fieldname] = val));
+
+    busboy.on("file", (fieldname, file, filename) => {
+      const filepath = path.join(tmpdir, filename.filename);
+      const writeStream = fs.createWriteStream(filepath);
+
+      uploads[fieldname] = filepath;
+
+      file.pipe(writeStream);
+
+      const promise = new Promise((resolve, reject) => {
+        file.on("end", () => {
+          writeStream.end();
+        });
+        writeStream.on("finish", resolve);
+        writeStream.on("error", reject);
+      });
+
+      fileWrites.push(promise);
+    });
+
+    busboy.on("finish", async () => {
+      const result = {fields, uploads: {}};
+
+      await Promise.all(fileWrites);
+
+      for (const file in uploads) {
+        if (file) {
+          const filename = uploads[file];
+
+          result.uploads[file] = fs.readFileSync(filename);
+          fs.unlinkSync(filename);
+        }
+      }
+
+      resolve(result);
+    });
+
+    busboy.on("error", reject);
+
+    if (req.rawBody) {
+      busboy.end(req.rawBody);
+    } else {
+      req.pipe(busboy);
+    }
+  });
 };

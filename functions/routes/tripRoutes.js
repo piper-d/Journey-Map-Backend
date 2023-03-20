@@ -2,7 +2,7 @@
 // Requirements and dependencies
 const tripRouter = require("express").Router();
 const {decodeToken} = require("../middleware");
-const {makeRandomName, convertToPNGBuffer, waitForFieldChange, prepareGoogleMaps} = require("../utils/helperFunctions");
+const {makeRandomName, convertToPNGBuffer, waitForFieldChange, prepareGoogleMaps, extractMultipartFormData} = require("../utils/helperFunctions");
 const {firestore} = require("firebase-admin");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
@@ -205,9 +205,8 @@ tripRouter.delete("/trips/:id/media", decodeToken, async (req, res, next) => {
   }
 });
 
-tripRouter.post("/trips/:id/media", decodeToken, upload.single("image"), async (req, res, next) => {
+tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
   const {id} = req.params;
-  const {latitude, longitude} = req.body;
   try {
     const trip_ref = await db.collection("Trips").doc(id);
     const snap = await trip_ref.get();
@@ -217,7 +216,11 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single("image"), async (
         return next(new AppError("this trip does not belong to you", 403));
       } else {
         // check if file is provided
-        if (!req.file) {
+        const extractedBody = await extractMultipartFormData(req);
+        let buffer = extractedBody["uploads"]["image"];
+        const {latitude, longitude, extension} = extractedBody["fields"];
+
+        if (!buffer) {
           return next(new AppError("No image file provided", 400));
         }
 
@@ -226,18 +229,14 @@ tripRouter.post("/trips/:id/media", decodeToken, upload.single("image"), async (
         }
 
         // extract original name and original extension
-        const originalname = req.file.originalname.split(".")[0];
-        const extension = req.file.originalname.split(".")[1];
-        let buffer;
         let fileName = "";
 
         // convert HEIC to PNG for optimum storage in object store
         if (extension == "HEIC" || extension == "heic" || extension == "heif" || extension == "HEIF") {
-          buffer = await convertToPNGBuffer(req.file.buffer);
-          fileName = originalname + makeRandomName(10) + ".png";
+          buffer = await convertToPNGBuffer(buffer);
+          fileName = makeRandomName(10) + ".png";
         } else {
-          fileName = originalname + makeRandomName(10) + "." + extension;
-          buffer = req.file.buffer;
+          fileName = makeRandomName(10) + "." + extension;
         }
 
         // upload file to firebase storage
@@ -373,6 +372,25 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
   } catch (e) {
     console.log(e);
     return next(new AppError(e, 400));
+  }
+});
+
+tripRouter.post("/upload/test", decodeToken, async (req, res, next) => {
+  try {
+    const extractedBody = await extractMultipartFormData(req);
+    const buffer = extractedBody["uploads"]["image"];
+    const bucketName = "journeymap-a8e65.appspot.com";
+    const file = FirebaseStorage.bucket(bucketName).file("test.jpeg");
+    file.createWriteStream()
+        .on("error", function(err) {
+          return next(new AppError(err, 400));
+        })
+        .on("finish", function() {
+          console.log(`File uploaded to ${bucketName}.`);
+        })
+        .end(buffer);
+  } catch (e) {
+    console.log(e);
   }
 });
 
