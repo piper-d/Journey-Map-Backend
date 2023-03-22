@@ -200,7 +200,6 @@ tripRouter.delete("/trips/:id/media", decodeToken, async (req, res, next) => {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    console.log(e);
     return next(new AppError(e, 400));
   }
 });
@@ -257,9 +256,11 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
         const publicURL = await FirebaseStorage.bucket(bucketName).file(compressedFileName).publicUrl();
 
         // store it in firestore inside of corresponding trip at certain location
-        trip_ref.update({
-          [`media.(${latitude},${longitude})`]: firestore.FieldValue.arrayUnion(publicURL),
-        })
+        trip_ref.set({
+          media: {
+            [`(${latitude},${longitude})`]: firestore.FieldValue.arrayUnion(publicURL)
+          }
+        }, { merge: true })
           .then(() => {
             console.log("Document successfully updated!");
           })
@@ -273,6 +274,7 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
+    console.log(e)
     return next(new AppError(e, 400));
   }
 });
