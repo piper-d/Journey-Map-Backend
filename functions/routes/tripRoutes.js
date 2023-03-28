@@ -8,6 +8,7 @@ const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer");
 const Shotstack = require("shotstack-sdk");
+const sgMail = require('@sendgrid/mail');
 require("dotenv").config();
 
 // /////////////////////////////////
@@ -79,7 +80,6 @@ tripRouter.post("/trips", decodeToken, async (req, res, next) => {
     await user.update({ Trips: firestore.FieldValue.arrayUnion(trip_ref) });
     return res.status(200).json({ error: "", tripId: result.id });
   } catch (e) {
-    console.log(e);
     return next(new AppError(`Bad request. Could not create a trip, ${e}`, 400));
   }
 });
@@ -110,7 +110,6 @@ tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
               const file = FirebaseStorage.bucket(bucketName).file(fileName);
               file.delete()
                 .then(() => {
-                  console.log("Successfully deleted image from Object Store");
                 }).catch((err) => {
                   return next(new AppError("could not delete image from object storage", 400));
                 });
@@ -178,7 +177,6 @@ tripRouter.delete("/trips/:id/media", decodeToken, async (req, res, next) => {
           [`media.(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url),
         })
           .then(() => {
-            console.log("Document successfully deleted from FIRESTORE!");
           })
           .catch((error) => {
             return next(new AppError(error, 400));
@@ -189,7 +187,6 @@ tripRouter.delete("/trips/:id/media", decodeToken, async (req, res, next) => {
         const file = FirebaseStorage.bucket(bucketName).file(fileName);
         file.delete()
           .then(() => {
-            console.log("Successfully deleted image from Object Store");
           }).catch((err) => {
             return next(new AppError("could not delete image from object storage", 400));
           });
@@ -246,7 +243,6 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
             return next(new AppError(err, 400));
           })
           .on("finish", function () {
-            console.log(`File ${fileName} uploaded to ${bucketName}.`);
           })
           .end(buffer);
 
@@ -262,7 +258,6 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
           },
         }, { merge: true })
           .then(() => {
-            console.log("Document successfully updated!");
           })
           .catch((error) => {
             return next(new AppError(error, 400));
@@ -274,7 +269,6 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    console.log(e);
     return next(new AppError(e, 400));
   }
 });
@@ -290,6 +284,12 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
         return next(new AppError("this trip does not belong to you", 403));
       } else {
         // EXPORT ACTION
+
+        //find user info
+        const snap_user = await db.collection("Users").doc(req.user).get();
+        const data_user = snap_user.data();
+        const username = data_user.username
+        const email = data_user.email
 
         // get all coordinates of the trip
         const points_array = [];
@@ -311,7 +311,6 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
               media_urls.push(url);
             }
           }
-
           // initialize the shostack client
           const defaultClient = Shotstack.ApiClient.instance;
           defaultClient.basePath = "https://api.shotstack.io/stage";
@@ -363,7 +362,23 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
           }
           const result = await waitForFieldChange(getRenderStatus, "status", "done");
 
-          return res.status(200).json({ error: "", downloadLink: result.url });
+          //send email
+          sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+          const msg = {
+            to: email,
+            from: 'journeymapteam@gmail.com',
+            subject: `${data['title']} download link`,
+            html: `Hello, ${username}, \n\n Here is your trip download link:  \n ${result.url}`
+          };
+          //ES8
+          (async () => {
+            try {
+              await sgMail.send(msg);
+              return res.status(200).json({ error: "", downloadLink: result.url });
+            } catch (error) {
+              return res.status(400).json({ error: "Could not send an email" });
+            }
+          })();
         } else {
           return next(new AppError("No media files found", 400));
         }
@@ -372,7 +387,6 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    console.log(e);
     return next(new AppError(e, 400));
   }
 });
