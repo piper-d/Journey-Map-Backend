@@ -17,7 +17,9 @@
   STEP 4: After browser loads up, open the developer window and navigate to session storage in application tab.<br>
   STEP 5: Log into existing account or create new one.<br>
   STEP 6: Upon successful completion, you should be able to see a bearer token.<br>
-  STEP 7: Use that token in authorization header in Postman, Arc, or whatever API testing solution you use with every request you send.<br>
+  STEP 7: Use that token in authorization header in Postman, Arc, or whatever API testing solution you use with every request you send.<br><br>
+
+***
 
 <b>Commands:</b>
 
@@ -29,4 +31,16 @@
 
 3. To deploy the source code to Google Cloud Functions, uncomment ```exports.app = functions.region("us-east1").https.onRequest(app);```, then comment out ```app.listen()```. Afterwards, run ```npm run lint -- --fix```. Once eslint completes execution, run ```npm run deploy```
 
-4. To run the test suite, execute ```npm run test```
+4. To run the test suite, execute ```npm run test```<br><br>
+
+***
+
+<b>Block Diagram</b>
+![SD1](https://user-images.githubusercontent.com/74462948/228599131-4b1fd25f-da02-4d62-94e7-702723c38a1a.png)
+
+***
+
+<b>Firestore UML</b>
+
+![Blank diagram-2](https://user-images.githubusercontent.com/74462948/228599975-9be9e848-983c-4f2a-94c5-9c49141fed95.png)
+
