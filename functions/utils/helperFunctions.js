@@ -60,7 +60,7 @@ module.exports.makeRandomName = (length) => {
 module.exports.convertToPNGBuffer = async (buffer) => {
   const outputBuffer = await convert({
     buffer: buffer, // the HEIC file buffer
-    format: "PNG", // output format
+    format: "JPEG", // output format
     quality: 1, // the compression quality, between 0 and 1
   });
   return outputBuffer;
@@ -87,7 +87,7 @@ module.exports.waitForFieldChange = async (asyncFunction, field, expectedValue) 
 
 module.exports.prepareGoogleMaps = (geopoints) => {
   const polylineData = polyline.encode(geopoints);
-  return `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=weight:5%7Ccolor:red%7Cenc:${polylineData}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+  return `https://maps.googleapis.com/maps/api/staticmap?size=600x400&maptype=satellite&path=weight:5%7Ccolor:white%7Cenc:${polylineData}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
 };
 
 module.exports.extractMultipartFormData = (req) => {
