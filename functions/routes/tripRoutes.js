@@ -323,18 +323,18 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
 
           const titleAsset = new Shotstack.TitleAsset;
           titleAsset
-            .setText(data['title'])
-            .setStyle('marker')
-            .setColor('#000000')
-            .setSize('medium')
-            .setPosition('top')
+            .setText(data["title"])
+            .setStyle("marker")
+            .setColor("#000000")
+            .setSize("medium")
+            .setPosition("top");
 
           const imageClips = [];
           const titleClip = new Shotstack.Clip;
           titleClip
             .setAsset(titleAsset)
             .setStart(0.1)
-            .setLength(2.9)
+            .setLength(2.9);
           imageClips.push(titleClip);
 
           for (const url of media_urls) {
@@ -345,7 +345,7 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
               .setAsset(imageAsset)
               .setStart(start)
               .setLength(length)
-              .setScale(1)
+              .setScale(1);
 
             imageClips.push(imageClip);
             start += length;
@@ -386,7 +386,7 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
             subject: `${data["title"]} download link`,
             html: `Hello, ${username}, \n\n Here is your trip download link:  \n ${result.url}`,
           };
-          return res.status(200).json({ error: "", downloadLink: result.url });
+          // return res.status(200).json({error: "", downloadLink: result.url});
 
           // send email
           (async () => {
@@ -405,7 +405,7 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    console.log(e)
+    console.log(e);
     return next(new AppError(e, 400));
   }
 });
