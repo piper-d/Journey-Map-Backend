@@ -22,7 +22,7 @@ describe("GET /trips", () => {
         id = obj["idToken"]
         const response = await request(testApi).get("/trips").set("Authorization", `Bearer ${id}`)
         expect(response.statusCode).toBe(200)
-        expect(response.body.length).toBe(1)
+        expect(response.body.length).toBe(7)
     })
 })
 
@@ -36,25 +36,22 @@ describe("GET /trips/:id", () => {
 
         const obj = JSON.parse(stdout)
         id = obj["idToken"]
-        const response = await request(testApi).get("/trips/Hwmhjp0PMg5M9CJteKag").set("Authorization", `Bearer ${id}`)
-        const responseWithError = await request(testApi).get("/trips/Ce7MOaNZCWKPlb8sB8Ju").set("Authorization", `Bearer ${id}`)
+        const response = await request(testApi).get("/trips/PozLNi78FVfmBk3mrTfK").set("Authorization", `Bearer ${id}`)
+        const responseWithError = await request(testApi).get("/trips/CHBGoZrfKFAS1W5tdvGX").set("Authorization", `Bearer ${id}`)
         expect(response.statusCode).toBe(200)
-        expect(response.body.title).toEqual("FOR TESTING PURPOSES DO NOT DELETE")
+        expect(response.body.data.title).toEqual("FOR TESTING PURPOSES DO NOT DELETE")
         expect(responseWithError.statusCode).toBe(403)
     })
 })
 
 
-describe("POST /trips, PUT /trips/:id, DELETE /trips/:id", () => {
+describe("POST /trips, PUT /trips/:id, GET /trips/:id/export, DELETE /trips/:id", () => {
     let createPayload = {
         "details": {
             "start_time": "Tue Mar 24 2015 20:20:00 GMT-0400 (Eastern Daylight Time)",
             "end_time": "Tue Mar 24 2015 22:20:00 GMT-0400 (Eastern Daylight Time)",
             "average_speed_mph": "",
             "distance_traveled_miles": ""
-        },
-        "media": {
-            "(50, 49)": ["https://firebasestorage.googleapis.com/v0/b/journeymap-a8e65.appspot.com/o/v4-460px-Be-Random-Step-12-Version-2.jpeg?alt=media&token=b7660eb7-1e25-4481-964e-4d3090e3d651"]
         },
         "point_coords": [
             [50, 47],
@@ -66,13 +63,10 @@ describe("POST /trips, PUT /trips/:id, DELETE /trips/:id", () => {
     }
 
     let updatePayload = {
-        "media": {
-            "(50, 47)": ["https://firebasestorage.googleapis.com/v0/b/journeymap-a8e65.appspot.com/o/v4-460px-Be-Random-Step-12-Version-2.jpeg?alt=media&token=b7660eb7-1e25-4481-964e-4d3090e3d651"]
-        },
         "title": "trip to Maldives"
     }
 
-    test("Create a new trip, then update it, and then delete it", async () => {
+    test("Create a new trip, then update it, then export it, and then delete it", async () => {
         let id = ""
         let stdout = execSync(`curl 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.API_KEY}' \
             -H 'Content-Type: application/json' \
@@ -92,8 +86,14 @@ describe("POST /trips, PUT /trips/:id, DELETE /trips/:id", () => {
         const responseOnUpdate = await request(testApi).put(`/trips/${tripId}`).set("Authorization", `Bearer ${id}`).send(updatePayload)
         expect(responseOnUpdate.statusCode).toBe(200)
         expect(responseOnUpdate.body.error).toBe("")
-        expect((await request(testApi).get(`/trips/${tripId}`).set("Authorization", `Bearer ${id}`)).body.title).toBe("trip to Maldives")
+        expect((await request(testApi).get(`/trips/${tripId}`).set("Authorization", `Bearer ${id}`)).body.data.title).toBe("trip to Maldives")
 
+
+        //Export the trip
+        // const responseOnExport = await request(testApi).get(`/trips/${tripId}/export`).set("Authorization", `Bearer ${id}`)
+        // expect(responseOnExport.statusCode).toBe(200)
+        // expect(responseOnExport.body.error).toBe("")
+        // expect(responseOnExport.body.downloadLink).toBeTruthy()
 
         //Check if delete was successful
         const responseOnDelete = await request(testApi).delete(`/trips/${tripId}`).set("Authorization", `Bearer ${id}`)
@@ -136,4 +136,3 @@ describe("PUT /user", () => {
         expect(response.body.username).toEqual(newUsername)
     })
 })
-
