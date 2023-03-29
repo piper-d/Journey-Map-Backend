@@ -8,7 +8,7 @@ const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer");
 const Shotstack = require("shotstack-sdk");
-const sgMail = require('@sendgrid/mail');
+const sgMail = require("@sendgrid/mail");
 require("dotenv").config();
 
 // /////////////////////////////////
@@ -285,11 +285,11 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
       } else {
         // EXPORT ACTION
 
-        //find user info
+        // find user info
         const snap_user = await db.collection("Users").doc(req.user).get();
         const data_user = snap_user.data();
-        const username = data_user.username
-        const email = data_user.email
+        const username = data_user.username;
+        const email = data_user.email;
 
         // get all coordinates of the trip
         const points_array = [];
@@ -320,7 +320,22 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
           // create the template
           let start = 0;
           const length = 3;
+
+          const titleAsset = new Shotstack.TitleAsset;
+          titleAsset
+            .setText(data['title'])
+            .setStyle('marker')
+            .setColor('#000000')
+            .setSize('medium')
+            .setPosition('top')
+
           const imageClips = [];
+          const titleClip = new Shotstack.Clip;
+          titleClip
+            .setAsset(titleAsset)
+            .setStart(0.1)
+            .setLength(2.9)
+          imageClips.push(titleClip);
 
           for (const url of media_urls) {
             const imageAsset = new Shotstack.ImageAsset;
@@ -330,7 +345,7 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
               .setAsset(imageAsset)
               .setStart(start)
               .setLength(length)
-              .setScale(1);
+              .setScale(1)
 
             imageClips.push(imageClip);
             start += length;
@@ -345,7 +360,8 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
           const output = new Shotstack.Output;
           output
             .setFormat("mp4")
-            .setResolution("sd");
+            .setResolution("sd")
+            .setFps(30);
 
           const edit = new Shotstack.Edit;
           edit
@@ -362,15 +378,17 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
           }
           const result = await waitForFieldChange(getRenderStatus, "status", "done");
 
-          //send email
+          // prepare email
           sgMail.setApiKey(process.env.SENDGRID_API_KEY);
           const msg = {
             to: email,
-            from: 'journeymapteam@gmail.com',
-            subject: `${data['title']} download link`,
-            html: `Hello, ${username}, \n\n Here is your trip download link:  \n ${result.url}`
+            from: "journeymapteam@gmail.com",
+            subject: `${data["title"]} download link`,
+            html: `Hello, ${username}, \n\n Here is your trip download link:  \n ${result.url}`,
           };
-          //ES8
+          return res.status(200).json({ error: "", downloadLink: result.url });
+
+          // send email
           (async () => {
             try {
               await sgMail.send(msg);
@@ -387,6 +405,7 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
+    console.log(e)
     return next(new AppError(e, 400));
   }
 });

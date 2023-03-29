@@ -92,7 +92,7 @@ module.exports.prepareGoogleMaps = (geopoints) => {
 
 module.exports.extractMultipartFormData = (req) => {
   return new Promise((resolve, reject) => {
-    const busboy = Busboy({ headers: req.headers });
+    const busboy = Busboy({headers: req.headers});
     const tmpdir = os.tmpdir();
     const fields = {};
     const fileWrites = [];
@@ -120,7 +120,7 @@ module.exports.extractMultipartFormData = (req) => {
     });
 
     busboy.on("finish", async () => {
-      const result = { fields, uploads: {} };
+      const result = {fields, uploads: {}};
 
       await Promise.all(fileWrites);
 
