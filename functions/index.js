@@ -30,7 +30,7 @@ const limiter = rateLimit({
 // /////////////////////////////////
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "https://journeymap-a8e65.web.app", "https://journeymap-a8e65.firebaseapp.coms"],
+  origin: ["http://localhost:3000", "https://journeymap-a8e65.web.app", "https://journeymap-a8e65.firebaseapp.com"],
   credentials: true, // access-control-allow-credentials:true
   optionSuccessStatus: 200,
 }));
