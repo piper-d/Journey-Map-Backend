@@ -1,7 +1,12 @@
 ## Source code for the backend of the Journey Map application
 ### Senior Design, Fall 2022-Spring 2023
 
-<b><i>Disclaimer:</i></b> 
+<b>Team:</b> <br>
+<i>Lead Backend Engineer:</i> [Emin Mammadzada](https://github.com/EminMammadzada) <br>
+<i>DevOps Engineer:</i> [Rafael Suarez](https://github.com/rasuar42) <br>
+<i>Project Manager:</i> [Dylan Piper](https://github.com/piper-d) <br>
+
+<b><i>Setup Prerequisites:</i></b> 
 
 1. You need certain API keys and environment variables to be able to run the application on your device. Those include:<br>
   1.1. Firebase Service Account.<br>
@@ -46,6 +51,6 @@
 
 ***
 
-<b>Testing Results</b>
+<b>Unit Testing Results at 83% Backend code coverage</b>
 ![Screenshot 2023-03-29 at 12 47 07 PM](https://user-images.githubusercontent.com/74462948/228610682-0f3467d1-6a0f-4e09-9147-7a401996c6c8.png)
 
