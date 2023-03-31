@@ -1,9 +1,9 @@
 // /////////////////////////////////
 // Requirements and dependencies
 const tripRouter = require("express").Router();
-const { decodeToken } = require("../middleware");
-const { makeRandomName, convertToPNGBuffer, waitForFieldChange, prepareGoogleMaps, extractMultipartFormData } = require("../utils/helperFunctions");
-const { firestore } = require("firebase-admin");
+const {decodeToken} = require("../middleware");
+const {makeRandomName, convertToPNGBuffer, waitForFieldChange, prepareGoogleMaps, extractMultipartFormData} = require("../utils/helperFunctions");
+const {firestore} = require("firebase-admin");
 const AppError = require("../utils/AppError");
 const admin = require("../config/firebase-config");
 const multer = require("multer");
@@ -15,7 +15,7 @@ require("dotenv").config();
 // Initialization
 const db = admin.firestore();
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({storage: storage});
 const FirebaseStorage = admin.storage();
 
 tripRouter.use((req, res, next) => {
@@ -25,8 +25,8 @@ tripRouter.use((req, res, next) => {
 
 tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { latitude, longitude, url } = req.body;
+    const {id} = req.params;
+    const {latitude, longitude, url} = req.body;
     const fileName = url.split("appspot.com/")[1];
     const trip_ref = await db.collection("Trips").doc(id);
     const snap = await trip_ref.get();
@@ -47,26 +47,26 @@ tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) =>
 
         trip_ref.update({
           media: {
-            [`(${latitude},${longitude})`]: data["media"][`(${latitude},${longitude})`].filter((item) => item != url)
+            [`(${latitude},${longitude})`]: data["media"][`(${latitude},${longitude})`].filter((item) => item != url),
           },
-        }, { merge: true })
-          .then(() => {
-            console.log("delete from firestore");
-          })
-          .catch((error) => {
-            return next(new AppError(error, 400));
-          });
+        }, {merge: true})
+            .then(() => {
+              console.log("delete from firestore");
+            })
+            .catch((error) => {
+              return next(new AppError(error, 400));
+            });
 
         // DELETE FROM OBJECT STORE
         const bucketName = "journeymap-a8e65.appspot.com";
         const file = FirebaseStorage.bucket(bucketName).file(fileName);
         file.delete()
-          .then(() => {
-          }).catch((err) => {
-            return next(new AppError("could not delete image from object storage", 400));
-          });
+            .then(() => {
+            }).catch((err) => {
+              return next(new AppError("could not delete image from object storage", 400));
+            });
 
-        return res.status(200).json({ error: "" });
+        return res.status(200).json({error: ""});
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
@@ -90,7 +90,7 @@ tripRouter.get("/trips", decodeToken, async (req, res, next) => {
       });
       return res.status(200).json(data);
     } else {
-      res.status(200).json({ trips: "you currently have no trips" });
+      res.status(200).json({trips: "you currently have no trips"});
     }
   } catch (e) {
     return next(new AppError(e, 400));
@@ -98,7 +98,7 @@ tripRouter.get("/trips", decodeToken, async (req, res, next) => {
 });
 
 tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
 
   try {
     const snap = await db.collection("Trips").doc(id).get();
@@ -107,7 +107,7 @@ tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
       if (data["user"]["_path"]["segments"][1] != req.user) {
         return next(new AppError("this trip does not belong to you", 403));
       }
-      return res.status(200).json({ data, error: "" });
+      return res.status(200).json({data, error: ""});
     } else {
       return next(new AppError("Trip does not exist", 404));
     }
@@ -118,7 +118,7 @@ tripRouter.get("/trips/:id", decodeToken, async (req, res, next) => {
 
 
 tripRouter.post("/trips", decodeToken, async (req, res, next) => {
-  const { point_coords = [], details = {}, title = "" } = req.body;
+  const {point_coords = [], details = {}, title = ""} = req.body;
   const user = await db.collection("Users").doc(req.user);
 
   const coords = [];
@@ -126,20 +126,20 @@ tripRouter.post("/trips", decodeToken, async (req, res, next) => {
     coords.push(new admin.firestore.GeoPoint(point[0], point[1]));
   }
 
-  const data = { user, details, point_coords: coords, title };
+  const data = {user, details, point_coords: coords, title};
 
   try {
     const result = await db.collection("Trips").add(data);
     const trip_ref = await db.collection("Trips").doc(result.id);
-    await user.update({ Trips: firestore.FieldValue.arrayUnion(trip_ref) });
-    return res.status(200).json({ error: "", tripId: result.id });
+    await user.update({Trips: firestore.FieldValue.arrayUnion(trip_ref)});
+    return res.status(200).json({error: "", tripId: result.id});
   } catch (e) {
     return next(new AppError(`Bad request. Could not create a trip, ${e}`, 400));
   }
 });
 
 tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
     const user = await db.collection("Users").doc(req.user);
     const trip_ref = await db.collection("Trips").doc(id);
@@ -152,7 +152,7 @@ tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
         // DELETE ACTION
 
         // remove from user's trips
-        await user.update({ Trips: firestore.FieldValue.arrayRemove(trip_ref) });
+        await user.update({Trips: firestore.FieldValue.arrayRemove(trip_ref)});
 
         // delete the media files from object storage associated with that trip before deleting the trip
         if (data["media"]) {
@@ -163,16 +163,16 @@ tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
               const bucketName = "journeymap-a8e65.appspot.com";
               const file = FirebaseStorage.bucket(bucketName).file(fileName);
               file.delete()
-                .then(() => {
-                }).catch((err) => {
-                  return next(new AppError("could not delete image from object storage", 400));
-                });
+                  .then(() => {
+                  }).catch((err) => {
+                    return next(new AppError("could not delete image from object storage", 400));
+                  });
             }
           }
         }
         // delete the trip itself
         await trip_ref.delete();
-        return res.status(200).json({ error: "" });
+        return res.status(200).json({error: ""});
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
@@ -184,7 +184,7 @@ tripRouter.delete("/trips/:id", decodeToken, async (req, res, next) => {
 
 
 tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
     const trip_ref = await db.collection("Trips").doc(id);
     const snap = await trip_ref.get();
@@ -194,9 +194,9 @@ tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
         return next(new AppError("this trip does not belong to you", 403));
       } else {
         // UPDATE ACTION
-        const { title = data["title"] } = req.body;
-        await trip_ref.update({ title: title });
-        return res.status(200).json({ error: "" });
+        const {title = data["title"]} = req.body;
+        await trip_ref.update({title: title});
+        return res.status(200).json({error: ""});
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
@@ -207,7 +207,7 @@ tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
 });
 
 tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
     const trip_ref = await db.collection("Trips").doc(id);
     const snap = await trip_ref.get();
@@ -219,7 +219,7 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
         // check if file is provided
         const extractedBody = await extractMultipartFormData(req);
         let buffer = extractedBody["uploads"]["image"];
-        const { latitude, longitude, extension } = extractedBody["fields"];
+        const {latitude, longitude, extension} = extractedBody["fields"];
 
         if (!buffer) {
           return next(new AppError("No image file provided", 400));
@@ -250,34 +250,34 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
         const write = file.createWriteStream();
 
         write
-          .on("error", function (err) {
-            return next(new AppError(err, 400));
-          })
-          .end(buffer, () => {
-            console.log("end");
-          })
-          .on("finish", async function () {
-            console.log("finished");
-            // fetch the url of the newly generated 1200x2000 image
-            const compressedFileName = fileName.split(".")[0] + "_1200x2000.jpeg";
+            .on("error", function(err) {
+              return next(new AppError(err, 400));
+            })
+            .end(buffer, () => {
+              console.log("end");
+            })
+            .on("finish", async function() {
+              console.log("finished");
+              // fetch the url of the newly generated 1200x2000 image
+              const compressedFileName = fileName.split(".")[0] + "_1200x2000.jpeg";
 
-            const publicURL = await FirebaseStorage.bucket(bucketName).file(compressedFileName).publicUrl();
+              const publicURL = await FirebaseStorage.bucket(bucketName).file(compressedFileName).publicUrl();
 
-            // store it in firestore inside of corresponding trip at certain location
-            trip_ref.set({
-              media: {
-                [`(${latitude},${longitude})`]: firestore.FieldValue.arrayUnion(publicURL),
-              },
-            }, { merge: true })
-              .then(() => {
-                setTimeout(() => {
-                  return res.status(200).json({ error: "", imageURL: publicURL });
-                }, 1000);
-              })
-              .catch((error) => {
-                return next(new AppError(error, 400));
-              });
-          });
+              // store it in firestore inside of corresponding trip at certain location
+              trip_ref.set({
+                media: {
+                  [`(${latitude},${longitude})`]: firestore.FieldValue.arrayUnion(publicURL),
+                },
+              }, {merge: true})
+                  .then(() => {
+                    setTimeout(() => {
+                      return res.status(200).json({error: "", imageURL: publicURL});
+                    }, 1000);
+                  })
+                  .catch((error) => {
+                    return next(new AppError(error, 400));
+                  });
+            });
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
@@ -290,7 +290,7 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
 
 
 tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
-  const { id } = req.params;
+  const {id} = req.params;
   try {
     const snap = await db.collection("Trips").doc(id).get();
     if (snap.exists) {
@@ -309,7 +309,7 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
         // get all coordinates of the trip
         const points_array = [];
         data["point_coords"].forEach((doc) => {
-          const { latitude, longitude } = doc;
+          const {latitude, longitude} = doc;
           points_array.push([latitude, longitude]);
         });
 
@@ -338,18 +338,18 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
 
           const titleAsset = new Shotstack.TitleAsset;
           titleAsset
-            .setText(data["title"])
-            .setStyle("marker")
-            .setColor("#000000")
-            .setSize("medium")
-            .setPosition("top");
+              .setText(data["title"])
+              .setStyle("marker")
+              .setColor("#000000")
+              .setSize("medium")
+              .setPosition("top");
 
           const imageClips = [];
           const titleClip = new Shotstack.Clip;
           titleClip
-            .setAsset(titleAsset)
-            .setStart(0.1)
-            .setLength(2.9);
+              .setAsset(titleAsset)
+              .setStart(0.1)
+              .setLength(2.9);
           imageClips.push(titleClip);
 
 
@@ -358,10 +358,10 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
             imageAsset.setSrc(url);
             const imageClip = new Shotstack.Clip;
             imageClip
-              .setAsset(imageAsset)
-              .setStart(start)
-              .setLength(length)
-              .setScale(1);
+                .setAsset(imageAsset)
+                .setStart(start)
+                .setLength(length)
+                .setScale(1);
 
             imageClips.push(imageClip);
             start += length;
@@ -375,14 +375,14 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
 
           const output = new Shotstack.Output;
           output
-            .setFormat("mp4")
-            .setResolution("sd")
-            .setFps(30);
+              .setFormat("mp4")
+              .setResolution("sd")
+              .setFps(30);
 
           const edit = new Shotstack.Edit;
           edit
-            .setTimeline(timeline)
-            .setOutput(output);
+              .setTimeline(timeline)
+              .setOutput(output);
 
           // render the template
           const api = new Shotstack.EditApi();
@@ -409,9 +409,9 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
           (async () => {
             try {
               await sgMail.send(msg);
-              return res.status(200).json({ error: "", downloadLink: result.url });
+              return res.status(200).json({error: "", downloadLink: result.url});
             } catch (error) {
-              return res.status(400).json({ error: "Could not send an email" });
+              return res.status(400).json({error: "Could not send an email"});
             }
           })();
         } else {
