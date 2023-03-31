@@ -49,7 +49,7 @@ tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) =>
           media: {
             [`(${latitude},${longitude})`]: data["media"][`(${latitude},${longitude})`].filter((item) => item != url),
             ...Object.entries(data.media)
-              .filter(([key, value]) => key != `(${latitude},${longitude})`)
+              .filter(([key, value]) => key != `(${latitude},${longitude})` && value.length > 0)
               .reduce((acc, [key, value]) => ({ ...acc, [key]: firestore.FieldValue.arrayUnion(...value) }), {})
           },
         }, { merge: true })
