@@ -20,6 +20,6 @@ module.exports = {
     "no-inner-declarations": 0,
   },
   parserOptions: {
-    ecmaVersion: 8,
+    ecmaVersion: 2018,
   },
 };
