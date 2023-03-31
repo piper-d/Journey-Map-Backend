@@ -272,7 +272,9 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
               },
             }, { merge: true })
               .then(() => {
-                return res.status(200).json({ error: "", imageURL: publicURL });
+                setTimeout(() => {
+                  return res.status(200).json({ error: "", imageURL: publicURL });
+                }, 1000)
               })
               .catch((error) => {
                 return next(new AppError(error, 400));
