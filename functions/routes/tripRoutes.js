@@ -44,10 +44,16 @@ tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) =>
         }
 
         // DELETE FROM FIRESTORE
+
+        console.log(`(${latitude},${longitude}), ${url}`)
+
         trip_ref.update({
-          [`media.(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url),
+          media: {
+            [`(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url)
+          }
         })
           .then(() => {
+            console.log('delete from firestore')
           })
           .catch((error) => {
             return next(new AppError(error, 400));
@@ -68,6 +74,7 @@ tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) =>
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
+    console.log(e)
     return next(new AppError(e, 400));
   }
 });
