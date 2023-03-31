@@ -152,7 +152,7 @@ tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
   }
 });
 
-tripRouter.delete("/trips/:id/media", decodeToken, async (req, res, next) => {
+tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { latitude, longitude, url } = req.body;
@@ -238,7 +238,7 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
         // upload file to firebase storage
         const bucketName = "journeymap-a8e65.appspot.com";
         const file = FirebaseStorage.bucket(bucketName).file(fileName);
-        const write = file.createWriteStream()
+        const write = file.createWriteStream();
 
         write
           .on("error", function (err) {
