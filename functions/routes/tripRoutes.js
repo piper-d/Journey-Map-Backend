@@ -23,6 +23,55 @@ tripRouter.use((req, res, next) => {
   next();
 });
 
+tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { latitude, longitude, url } = req.body;
+    const fileName = url.split("appspot.com/")[1];
+    const trip_ref = await db.collection("Trips").doc(id);
+    const snap = await trip_ref.get();
+    if (snap.exists) {
+      const data = snap.data();
+      if (data["user"]["_path"]["segments"][1] != req.user) {
+        return next(new AppError("this trip does not belong to you", 403));
+      } else {
+        if (!latitude || !longitude) {
+          return next(new AppError("No coordinates provided", 400));
+        }
+
+        if (!url) {
+          return next(new AppError("No url provided", 400));
+        }
+
+        // DELETE FROM FIRESTORE
+        trip_ref.update({
+          [`media.(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url),
+        })
+          .then(() => {
+          })
+          .catch((error) => {
+            return next(new AppError(error, 400));
+          });
+
+        // DELETE FROM OBJECT STORE
+        const bucketName = "journeymap-a8e65.appspot.com";
+        const file = FirebaseStorage.bucket(bucketName).file(fileName);
+        file.delete()
+          .then(() => {
+          }).catch((err) => {
+            return next(new AppError("could not delete image from object storage", 400));
+          });
+
+        return res.status(200).json({ error: "" });
+      }
+    } else {
+      return next(new AppError("Trip does not exist", 404));
+    }
+  } catch (e) {
+    return next(new AppError(e, 400));
+  }
+});
+
 tripRouter.get("/trips", decodeToken, async (req, res, next) => {
   try {
     const userRef = db.collection("Users").doc(req.user);
@@ -142,55 +191,6 @@ tripRouter.put("/trips/:id", decodeToken, async (req, res, next) => {
         // UPDATE ACTION
         const { title = data["title"] } = req.body;
         await trip_ref.update({ title: title });
-        return res.status(200).json({ error: "" });
-      }
-    } else {
-      return next(new AppError("Trip does not exist", 404));
-    }
-  } catch (e) {
-    return next(new AppError(e, 400));
-  }
-});
-
-tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { latitude, longitude, url } = req.body;
-    const fileName = url.split("appspot.com/")[1];
-    const trip_ref = await db.collection("Trips").doc(id);
-    const snap = await trip_ref.get();
-    if (snap.exists) {
-      const data = snap.data();
-      if (data["user"]["_path"]["segments"][1] != req.user) {
-        return next(new AppError("this trip does not belong to you", 403));
-      } else {
-        if (!latitude || !longitude) {
-          return next(new AppError("No coordinates provided", 400));
-        }
-
-        if (!url) {
-          return next(new AppError("No url provided", 400));
-        }
-
-        // DELETE FROM FIRESTORE
-        trip_ref.update({
-          [`media.(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url),
-        })
-          .then(() => {
-          })
-          .catch((error) => {
-            return next(new AppError(error, 400));
-          });
-
-        // DELETE FROM OBJECT STORE
-        const bucketName = "journeymap-a8e65.appspot.com";
-        const file = FirebaseStorage.bucket(bucketName).file(fileName);
-        file.delete()
-          .then(() => {
-          }).catch((err) => {
-            return next(new AppError("could not delete image from object storage", 400));
-          });
-
         return res.status(200).json({ error: "" });
       }
     } else {
