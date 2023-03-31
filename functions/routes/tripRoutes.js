@@ -252,12 +252,14 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
         const write = file.createWriteStream();
 
         write
-          .end(buffer, () => { console.log('end') })
           .on("error", function (err) {
             return next(new AppError(err, 400));
           })
+          .end(buffer, () => {
+            console.log("end");
+          })
           .on("finish", async function () {
-            console.log('finished')
+            console.log("finished");
             // fetch the url of the newly generated 1200x2000 image
             const compressedFileName = fileName.split(".")[0] + "_1200x2000.jpeg";
 
@@ -275,13 +277,13 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
               .catch((error) => {
                 return next(new AppError(error, 400));
               });
-          })
+          });
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    console.log(e)
+    console.log(e);
     return next(new AppError(e, 400));
   }
 });
