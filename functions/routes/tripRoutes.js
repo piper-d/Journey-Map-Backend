@@ -45,13 +45,11 @@ tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) =>
 
         // DELETE FROM FIRESTORE
 
-        console.log(`(${latitude},${longitude}), ${url}`);
-
         trip_ref.update({
           media: {
-            [`(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url),
+            [`(${latitude},${longitude})`]: data["media"][`(${latitude},${longitude})`].filter((item) => item != url)
           },
-        })
+        }, { merge: true })
           .then(() => {
             console.log("delete from firestore");
           })
@@ -274,7 +272,7 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
               .then(() => {
                 setTimeout(() => {
                   return res.status(200).json({ error: "", imageURL: publicURL });
-                }, 1000)
+                }, 1000);
               })
               .catch((error) => {
                 return next(new AppError(error, 400));
