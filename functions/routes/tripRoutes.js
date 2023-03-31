@@ -45,15 +45,15 @@ tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) =>
 
         // DELETE FROM FIRESTORE
 
-        console.log(`(${latitude},${longitude}), ${url}`)
+        console.log(`(${latitude},${longitude}), ${url}`);
 
         trip_ref.update({
           media: {
-            [`(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url)
-          }
+            [`(${latitude},${longitude})`]: firestore.FieldValue.arrayRemove(url),
+          },
         })
           .then(() => {
-            console.log('delete from firestore')
+            console.log("delete from firestore");
           })
           .catch((error) => {
             return next(new AppError(error, 400));
@@ -74,7 +74,7 @@ tripRouter.put("/trips/:id/media/delete", decodeToken, async (req, res, next) =>
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
-    console.log(e)
+    console.log(e);
     return next(new AppError(e, 400));
   }
 });
@@ -231,6 +231,10 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
           return next(new AppError("No coordinates provided", 400));
         }
 
+        if (!extension) {
+          return next(new AppError("No extension provided", 400));
+        }
+
         // extract original name and original extension
         let fileName = "";
 
@@ -248,13 +252,13 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
         const write = file.createWriteStream();
 
         write
+          .end(buffer, () => { console.log('end') })
           .on("error", function (err) {
             return next(new AppError(err, 400));
           })
-          .on("finish", function () {
-          })
-          .end(buffer, async function () {
-            // fetch the url of the newly generated 400x400 image
+          .on("finish", async function () {
+            console.log('finished')
+            // fetch the url of the newly generated 1200x2000 image
             const compressedFileName = fileName.split(".")[0] + "_1200x2000.jpeg";
 
             const publicURL = await FirebaseStorage.bucket(bucketName).file(compressedFileName).publicUrl();
@@ -271,12 +275,13 @@ tripRouter.post("/trips/:id/media", decodeToken, async (req, res, next) => {
               .catch((error) => {
                 return next(new AppError(error, 400));
               });
-          });
+          })
       }
     } else {
       return next(new AppError("Trip does not exist", 404));
     }
   } catch (e) {
+    console.log(e)
     return next(new AppError(e, 400));
   }
 });
