@@ -423,26 +423,26 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
             return response.response;
           }
           const result = await waitForFieldChange(getRenderStatus, "status", "done");
-          return res.status(200).json({error: "", downloadLink: result.url});
+          // return res.status(200).json({error: "", downloadLink: result.url});
 
           // prepare email
-          // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-          // const msg = {
-          //   to: email,
-          //   from: "journeymapteam@gmail.com",
-          //   subject: `${data["title"]} download link`,
-          //   html: `Hello, ${username}, \n\n Here is your trip download link:  \n ${result.url}`,
-          // };
+          sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+          const msg = {
+            to: email,
+            from: "journeymapteam@gmail.com",
+            subject: `${data["title"]} download link`,
+            html: `Hello, ${username}, \n\n Here is your trip download link:  \n ${result.url}`,
+          };
 
-          // // send email
-          // (async () => {
-          //   try {
-          //     await sgMail.send(msg);
-          //     return res.status(200).json({ error: "", downloadLink: result.url });
-          //   } catch (error) {
-          //     return res.status(400).json({ error: "Could not send an email" });
-          //   }
-          // })();
+          // send email
+          (async () => {
+            try {
+              await sgMail.send(msg);
+              return res.status(200).json({error: "", downloadLink: result.url});
+            } catch (error) {
+              return res.status(400).json({error: "Could not send an email"});
+            }
+          })();
         } else {
           return next(new AppError("No media files found", 400));
         }
