@@ -11,7 +11,7 @@ module.exports = {
   ignorePatterns: ["*.test.js"],
   rules: {
     "quotes": ["error", "double"],
-    "max-len": ["error", {"code": 200, "tabWidth": 4}],
+    "max-len": ["error", {"code": 300, "tabWidth": 4}],
     "require-jsdoc": 0,
     "new-cap": 0,
     "camelcase": 0,

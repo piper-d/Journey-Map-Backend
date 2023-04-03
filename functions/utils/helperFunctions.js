@@ -25,23 +25,23 @@ const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
   }
 };
 
-//convert seconds into a string that would display hours minutes second
+// convert seconds into a string that would display hours minutes second
 module.exports.parseSeconds = (seconds) => {
   d = Number(seconds);
-  var h = Math.floor(d / 3600);
-  var m = Math.floor(d % 3600 / 60);
-  var s = Math.floor(d % 3600 % 60);
+  const h = Math.floor(d / 3600);
+  const m = Math.floor(d % 3600 / 60);
+  const s = Math.floor(d % 3600 % 60);
 
-  var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
-  var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
-  var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+  const hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+  const mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
+  const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
   return hDisplay + mDisplay + sDisplay;
-}
+};
 
 module.exports.parseDateTime = (value) => {
-  const date = new Date(value)
-  return date.toLocaleString()
-}
+  const date = new Date(value);
+  return date.toLocaleString();
+};
 
 
 module.exports.calculateDistance = (points) => {
@@ -110,7 +110,7 @@ module.exports.prepareGoogleMaps = (geopoints) => {
 
 module.exports.extractMultipartFormData = (req) => {
   return new Promise((resolve, reject) => {
-    const busboy = Busboy({ headers: req.headers });
+    const busboy = Busboy({headers: req.headers});
     const tmpdir = os.tmpdir();
     const fields = {};
     const fileWrites = [];
@@ -138,7 +138,7 @@ module.exports.extractMultipartFormData = (req) => {
     });
 
     busboy.on("finish", async () => {
-      const result = { fields, uploads: {} };
+      const result = {fields, uploads: {}};
 
       await Promise.all(fileWrites);
 
