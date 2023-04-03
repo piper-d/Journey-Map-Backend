@@ -25,6 +25,24 @@ const distanceBetween2Points = (lat1, lon1, lat2, lon2) => {
   }
 };
 
+//convert seconds into a string that would display hours minutes second
+module.exports.parseSeconds = (seconds) => {
+  d = Number(seconds);
+  var h = Math.floor(d / 3600);
+  var m = Math.floor(d % 3600 / 60);
+  var s = Math.floor(d % 3600 % 60);
+
+  var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+  var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
+  var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+  return hDisplay + mDisplay + sDisplay;
+}
+
+module.exports.parseDateTime = (value) => {
+  const date = new Date(value)
+  return date.toLocaleString()
+}
+
 
 module.exports.calculateDistance = (points) => {
   let total = 0;
@@ -57,7 +75,7 @@ module.exports.makeRandomName = (length) => {
 };
 
 
-module.exports.convertToPNGBuffer = async (buffer) => {
+module.exports.convertToJPEGBuffer = async (buffer) => {
   const outputBuffer = await convert({
     buffer: buffer, // the HEIC file buffer
     format: "JPEG", // output format
@@ -87,12 +105,12 @@ module.exports.waitForFieldChange = async (asyncFunction, field, expectedValue) 
 
 module.exports.prepareGoogleMaps = (geopoints) => {
   const polylineData = polyline.encode(geopoints);
-  return `https://maps.googleapis.com/maps/api/staticmap?size=600x400&maptype=satellite&path=weight:5%7Ccolor:white%7Cenc:${polylineData}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+  return `https://maps.googleapis.com/maps/api/staticmap?size=600x400&maptype=satellite&path=weight:5%7Ccolor:white%7Cenc:${polylineData}&path=weight:12%7Ccolor:blue%7Cenc:${polylineData}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
 };
 
 module.exports.extractMultipartFormData = (req) => {
   return new Promise((resolve, reject) => {
-    const busboy = Busboy({headers: req.headers});
+    const busboy = Busboy({ headers: req.headers });
     const tmpdir = os.tmpdir();
     const fields = {};
     const fileWrites = [];
@@ -120,7 +138,7 @@ module.exports.extractMultipartFormData = (req) => {
     });
 
     busboy.on("finish", async () => {
-      const result = {fields, uploads: {}};
+      const result = { fields, uploads: {} };
 
       await Promise.all(fileWrites);
 
