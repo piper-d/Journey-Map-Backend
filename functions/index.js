@@ -4,6 +4,7 @@ const functions = require("firebase-functions");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const express = require("express");
+const sgMail = require("@sendgrid/mail");
 
 // Security
 const cors = require("cors");
@@ -56,6 +57,31 @@ app.get("/dummy", async (req, res) => {
       {title: "Task2"},
     ],
   });
+});
+
+app.post("/contact", async (req, res) => {
+  const {email, name, message} = req.body;
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const msg = {
+    to: "journeymapteam@gmail.com",
+    from: "journeymapteam@gmail.com",
+    subject: `${name} sent you a message from the contact form`,
+    html: `
+      <h4>From: ${name}</h4>
+      <h4>Email: ${email}</h4> <br>
+      <p>Message:${message}</p>
+    `,
+  };
+
+  // send email
+  (async () => {
+    try {
+      await sgMail.send(msg);
+      return res.status(200).json({error: ""});
+    } catch (error) {
+      return res.status(400).json({error: "Could not send an email"});
+    }
+  })();
 });
 
 app.use(tripRoutes);
