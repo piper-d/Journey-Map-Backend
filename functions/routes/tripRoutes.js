@@ -331,7 +331,7 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
           }
           // initialize the shostack client
           const defaultClient = Shotstack.ApiClient.instance;
-          defaultClient.basePath = "https://api.shotstack.io/stage";
+          defaultClient.basePath = "https://api.shotstack.io/v1";
           const DeveloperKey = defaultClient.authentications["DeveloperKey"];
           DeveloperKey.apiKey = process.env.SHOTSTACK_API_KEY;
 
