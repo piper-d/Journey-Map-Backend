@@ -329,6 +329,12 @@ tripRouter.get("/trips/:id/export", decodeToken, async (req, res, next) => {
               media_urls.push(url);
             }
           }
+
+          // check if the media array is empty
+          if (media_urls.length == 0) {
+            return next(new AppError("No media files found", 400));
+          }
+
           // initialize the shostack client
           const defaultClient = Shotstack.ApiClient.instance;
           defaultClient.basePath = "https://api.shotstack.io/v1";
